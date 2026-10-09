@@ -1,0 +1,38 @@
+:root {
+  --brand: #5b3a8e;
+  --brand-dark: #432a6b;
+}
+
+.bg-brand {
+  background-color: var(--brand);
+}
+
+.btn-brand {
+  background-color: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}
+
+.btn-brand:hover,
+.btn-brand:focus {
+  background-color: var(--brand-dark);
+  border-color: var(--brand-dark);
+  color: #fff;
+}
+
+.card-livro {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.card-livro:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.12);
+}
+
+.capa {
+  font-size: 3rem;
+  text-align: center;
+  background: #f3eefb;
+  border-radius: 0.5rem;
+  padding: 1rem 0;
+}

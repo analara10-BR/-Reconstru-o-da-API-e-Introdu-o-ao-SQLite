@@ -1,0 +1,225 @@
+# Via Extensão VS Code REST Client (Huachao Mao)
+# Antes de testar: npm run db:populate  e  npm run dev
+
+### Configurações Globais
+@baseUrl = http://localhost:3000
+@contentType = application/json
+
+# ===================== Lecture001 =====================
+
+### Endpoint "/"
+GET {{baseUrl}}/
+
+### Endpoint "/equipe"
+GET {{baseUrl}}/equipe
+
+# ===================== Board ApiN2V1 =====================
+
+### Verifica o status do servidor
+GET {{baseUrl}}/api/info
+Accept: {{contentType}}
+
+### Testa o Middleware (id correto = 42)
+GET {{baseUrl}}/api/info/42
+Accept: {{contentType}}
+
+### Testa o Middleware (id inválido -> 400)
+GET {{baseUrl}}/api/info/ABC
+Accept: {{contentType}}
+
+### Testa o Middleware (resposta incorreta -> 500 pelo errorHandler)
+GET {{baseUrl}}/api/info/7
+Accept: {{contentType}}
+
+### Rota inexistente -> 404 (notFound)
+GET {{baseUrl}}/api/rota-que-nao-existe
+Accept: {{contentType}}
+
+# ===================== Atividade N2 =====================
+
+### Dados da página home
+GET {{baseUrl}}/api/home
+
+### Lista de produtos (livros do banco)
+GET {{baseUrl}}/api/products
+
+### Produto por id
+GET {{baseUrl}}/api/products/1
+
+### Produto inexistente -> 404
+GET {{baseUrl}}/api/products/999
+
+# ===================== CRUD Livros (SQLite) =====================
+
+### GET - Todos os livros
+GET {{baseUrl}}/api/livros
+
+### GET - Busca por título, autor ou categoria
+GET {{baseUrl}}/api/livros?q=machado
+
+### GET - Livro por id
+GET {{baseUrl}}/api/livros/1
+
+### GET - Livro inexistente -> 404
+GET {{baseUrl}}/api/livros/999
+
+### POST - Cadastrar livro
+POST {{baseUrl}}/api/livros
+Content-Type: {{contentType}}
+
+{
+    "titulo": "Claro Enigma",
+    "ano": 1951,
+    "disponivel": true,
+    "exemplares": 10
+}
+
+### POST - Cadastrar livro com autor, detalhes (1:1) e categorias (N:N)
+POST {{baseUrl}}/api/livros
+Content-Type: {{contentType}}
+
+{
+    "titulo": "Quincas Borba",
+    "ano": 1891,
+    "disponivel": true,
+    "exemplares": 3,
+    "autor_id": 1,
+    "isbn": "978-85-000-0000-1",
+    "editora": "Editora Globo",
+    "categoria_ids": [1, 2]
+}
+
+### POST - Dados inválidos -> 400
+POST {{baseUrl}}/api/livros
+Content-Type: {{contentType}}
+
+{
+    "ano": "mil novecentos"
+}
+
+### POST - Autor inexistente (FOREIGN KEY) -> 400
+POST {{baseUrl}}/api/livros
+Content-Type: {{contentType}}
+
+{
+    "titulo": "Livro sem autor válido",
+    "autor_id": 999
+}
+
+### PUT - Atualizar livro COMPLETO (id = 1)
+PUT {{baseUrl}}/api/livros/1
+Content-Type: {{contentType}}
+
+{
+    "titulo": "Livro Atualizado",
+    "ano": 2000,
+    "disponivel": false,
+    "exemplares": 5
+}
+
+### PATCH - Atualização PARCIAL (id = 1)
+PATCH {{baseUrl}}/api/livros/1
+Content-Type: {{contentType}}
+
+{
+    "titulo": "Título Parcialmente Atualizado"
+}
+
+### N:N - Vincular a categoria 4 ao livro 2
+POST {{baseUrl}}/api/livros/2/categorias/4
+
+### N:N - Remover o vínculo da categoria 4 com o livro 2
+DELETE {{baseUrl}}/api/livros/2/categorias/4
+
+### DELETE - Remover livro (id = 1)
+DELETE {{baseUrl}}/api/livros/1
+
+### DELETE - Livro inexistente -> 404
+DELETE {{baseUrl}}/api/livros/999
+
+# ===================== Autores (1:N) =====================
+
+### Listar autores
+GET {{baseUrl}}/api/autores
+
+### Autor e seus livros
+GET {{baseUrl}}/api/autores/3
+
+### Cadastrar autor
+POST {{baseUrl}}/api/autores
+Content-Type: {{contentType}}
+
+{
+    "nome": "Clarice Lispector"
+}
+
+### Atualizar autor
+PUT {{baseUrl}}/api/autores/4
+Content-Type: {{contentType}}
+
+{
+    "nome": "Clarice Lispector (atualizado)"
+}
+
+### Deletar autor (os livros ficam com autor_id = NULL - ON DELETE SET NULL)
+DELETE {{baseUrl}}/api/autores/3
+
+# ===================== Categorias (N:N) =====================
+
+### Listar categorias
+GET {{baseUrl}}/api/categorias
+
+### Categoria e seus livros
+GET {{baseUrl}}/api/categorias/2
+
+### Cadastrar categoria
+POST {{baseUrl}}/api/categorias
+Content-Type: {{contentType}}
+
+{
+    "nome": "Poesia"
+}
+
+### Atualizar categoria
+PUT {{baseUrl}}/api/categorias/5
+Content-Type: {{contentType}}
+
+{
+    "nome": "Poesia Brasileira"
+}
+
+### Deletar categoria (vínculos removidos por ON DELETE CASCADE)
+DELETE {{baseUrl}}/api/categorias/5
+
+# ===================== Usuários =====================
+
+### Listar usuários
+GET {{baseUrl}}/api/usuarios
+
+### Usuário por id
+GET {{baseUrl}}/api/usuarios/1
+
+### Cadastrar usuário
+POST {{baseUrl}}/api/usuarios
+Content-Type: {{contentType}}
+
+{
+    "nome": "Maria Souza",
+    "email": "maria@email.com",
+    "idade": 20,
+    "altura": 1.62,
+    "ativo": true,
+    "saldo": 100
+}
+
+### E-mail repetido (UNIQUE) -> 400
+POST {{baseUrl}}/api/usuarios
+Content-Type: {{contentType}}
+
+{
+    "nome": "Outro José",
+    "email": "ze@email.com"
+}
+
+### Deletar usuário
+DELETE {{baseUrl}}/api/usuarios/2
