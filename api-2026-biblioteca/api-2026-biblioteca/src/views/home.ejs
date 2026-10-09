@@ -1,0 +1,35 @@
+<section class="hero">
+  <div class="container">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-7">
+        <p class="eyebrow">Um espaço para boas histórias</p>
+        <h1>Encontre sua próxima leitura.</h1>
+        <p class="lead mt-4 mb-4">Explore clássicos da literatura, descubra novos autores e acompanhe nosso catálogo em uma aplicação construída com Node.js, Express, EJS e SQLite.</p>
+        <a class="btn btn-brand" href="/products">Explorar catálogo <span aria-hidden="true">→</span></a>
+      </div>
+      <div class="col-lg-5">
+        <div class="book-card p-4">
+          <div class="book-cover" style="height:260px;font-size:5rem">📚</div>
+          <p class="eyebrow mb-1">Biblioteca em números</p>
+          <div class="row g-3">
+            <div class="col-6"><div class="stat"><strong><%= total %></strong><span class="book-meta">livros cadastrados</span></div></div>
+            <div class="col-6"><div class="stat"><strong><%= autores %></strong><span class="book-meta">autores</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="section">
+  <div class="container">
+    <div class="row align-items-end g-3">
+      <div class="col-md-8"><p class="eyebrow">Projeto de aprendizagem</p><h2 class="display-6">Tecnologia por trás das histórias</h2></div>
+      <div class="col-md-4 text-md-end"><a href="/about">Conheça o projeto →</a></div>
+    </div>
+    <div class="row g-3 mt-2">
+      <div class="col-md-4"><div class="book-card"><h3 class="h4">API REST</h3><p class="mb-0">Rotas HTTP para consultar, cadastrar, atualizar e excluir registros.</p></div></div>
+      <div class="col-md-4"><div class="book-card"><h3 class="h4">Banco SQLite</h3><p class="mb-0">Dados persistentes com tabelas e relacionamentos entre livros, autores e categorias.</p></div></div>
+      <div class="col-md-4"><div class="book-card"><h3 class="h4">Páginas EJS</h3><p class="mb-0">Layout reutilizável, componentes parciais e arquivos estáticos.</p></div></div>
+    </div>
+  </div>
+</section>
