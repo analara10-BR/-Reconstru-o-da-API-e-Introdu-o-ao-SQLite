@@ -2,7 +2,7 @@
 export const handleSqliteError = (error, res, next) => {
   const code = String(error.code || "");
   if (code === "SQLITE_CONSTRAINT_FOREIGNKEY") {
-    return res.status(400).json({ message: "Relacionamento inválido: autor ou categoria informado não existe.", error: error.message });
+    return res.status(400).json({ message: "Relacionamento inválido: marca ou categoria informada não existe.", error: error.message });
   }
   if (code === "SQLITE_CONSTRAINT_UNIQUE" || code === "SQLITE_CONSTRAINT_PRIMARYKEY") {
     return res.status(400).json({ message: "Registro duplicado.", error: error.message });

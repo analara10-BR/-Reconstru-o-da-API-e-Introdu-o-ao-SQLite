@@ -5,9 +5,9 @@ export default class CategoriasModel {
     return db
       .prepare(
         `
-        SELECT c.id, c.nome, COUNT(lc.livro_id) AS total_livros
+        SELECT c.id, c.nome, COUNT(lc.produto_id) AS total_produtos
         FROM categorias c
-        LEFT JOIN livros_categorias lc ON lc.categoria_id = c.id
+        LEFT JOIN produtos_categorias lc ON lc.categoria_id = c.id
         GROUP BY c.id
         ORDER BY c.nome
         `,
@@ -15,18 +15,18 @@ export default class CategoriasModel {
       .all();
   }
 
-  // Categoria + seus livros (relacionamento N:N)
+  // Categoria + seus produtos (relacionamento N:N)
   findById(id) {
     const categoria = db.prepare("SELECT * FROM categorias WHERE id = ?").get(id);
     if (!categoria) return null;
-    categoria.livros = db
+    categoria.produtos = db
       .prepare(
         `
-        SELECT l.id, l.titulo, l.ano
-        FROM livros l
-        INNER JOIN livros_categorias lc ON lc.livro_id = l.id
+        SELECT l.id, l.nome, l.preco
+        FROM produtos l
+        INNER JOIN produtos_categorias lc ON lc.produto_id = l.id
         WHERE lc.categoria_id = ?
-        ORDER BY l.titulo
+        ORDER BY l.nome
         `,
       )
       .all(id);
@@ -43,7 +43,7 @@ export default class CategoriasModel {
     return result.changes ? this.findById(id) : null;
   }
 
-  // Os vínculos em livros_categorias são removidos por ON DELETE CASCADE
+  // Os vínculos em produtos_categorias são removidos por ON DELETE CASCADE
   remove(id) {
     const categoria = this.findById(id);
     if (!categoria) return null;

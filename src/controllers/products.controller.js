@@ -1,21 +1,21 @@
-import LivrosModel from "../models/livros.model.js";
+import ProdutosModel from "../models/produtos.model.js";
 
-// Os "produtos" da loja/biblioteca são os livros cadastrados no banco SQLite
-const toProduct = (livro) => ({
-  id: livro.id,
-  nome: livro.titulo,
-  disponivel: livro.disponivel,
-  ano: livro.ano,
-  exemplares: livro.exemplares,
-  autor: livro.autor,
-  isbn: livro.isbn,
-  editora: livro.editora,
-  categorias: livro.categorias,
+// Os "produtos" da loja/brecho são os produtos cadastrados no banco SQLite
+const toProduct = (produto) => ({
+  id: produto.id,
+  nome: produto.nome,
+  disponivel: produto.disponivel,
+  preco: produto.preco,
+  estoque: produto.estoque,
+  marca: produto.marca,
+  tamanho: produto.tamanho,
+  condicao: produto.condicao,
+  categorias: produto.categorias,
 });
 
 export default class ProductsController {
   constructor() {
-    this.model = new LivrosModel();
+    this.model = new ProdutosModel();
   }
 
   async getProducts(req, res, next) {
@@ -30,13 +30,13 @@ export default class ProductsController {
   async getProductById(req, res, next) {
     try {
       const { id } = req.params; // Captura o "id" da URL
-      const livro = this.model.findById(Number(id)); // acesso ao BD
+      const produto = this.model.findById(Number(id)); // acesso ao BD
 
-      if (!livro) {
+      if (!produto) {
         return res.status(404).json({ message: "Produto não encontrado" });
       }
 
-      res.json(toProduct(livro));
+      res.json(toProduct(produto));
     } catch (error) {
       next(error);
     }

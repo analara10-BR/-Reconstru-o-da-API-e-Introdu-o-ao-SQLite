@@ -1,5 +1,5 @@
 // Middleware para Validação de um id
-// Verifica todos os parâmetros de rota que representam um id (ex.: :id, :livroId, :categoriaId)
+// Verifica todos os parâmetros de rota que representam um id (ex.: :id, :produtoId, :categoriaId)
 const verifyParamId = (request, response, next) => {
   for (const [nome, valor] of Object.entries(request.params)) {
     if (nome === "id" || nome.endsWith("Id")) {

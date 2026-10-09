@@ -9,64 +9,64 @@ console.log("Populando o banco de dados...");
 // Limpa os dados anteriores para o script poder ser executado várias vezes
 // (a ordem importa por causa das chaves estrangeiras)
 db.exec(`
-  DELETE FROM livros_categorias;
-  DELETE FROM detalhes_livro;
-  DELETE FROM livros;
+  DELETE FROM produtos_categorias;
+  DELETE FROM detalhes_produto;
+  DELETE FROM produtos;
   DELETE FROM categorias;
-  DELETE FROM autores;
+  DELETE FROM marcas;
   DELETE FROM usuarios;
   DELETE FROM sqlite_sequence;
 `);
 
 /* =========================
-   AUTORES (1:N)
+   MARCAS (1:N)
 ========================= */
-const insertAutor = db.prepare(`
-  INSERT INTO autores (nome)
+const insertMarca = db.prepare(`
+  INSERT INTO marcas (nome)
   VALUES (?)
 `);
 
-insertAutor.run("Machado de Assis");
-insertAutor.run("George Orwell");
-insertAutor.run("J. K. Rowling");
+insertMarca.run("Zara");
+insertMarca.run("Levi's");
+insertMarca.run("Nike");
 
-console.log("autores");
-let temp = db.prepare("SELECT * FROM autores").all();
+console.log("marcas");
+let temp = db.prepare("SELECT * FROM marcas").all();
 console.log(temp);
 
 /* =========================
-   LIVROS
+   PRODUTOS
 ========================= */
-const insertLivro = db.prepare(`
-  INSERT INTO livros (titulo, disponibilidade, ano, autor_id)
-  VALUES (?, ?, ?, ?)
+const insertProduto = db.prepare(`
+  INSERT INTO produtos (nome, disponibilidade, preco, estoque, marca_id)
+  VALUES (?, ?, ?, ?, ?)
 `);
 
-insertLivro.run("Dom Casmurro", 1, 1899, 1);
-insertLivro.run("Memórias Póstumas de Brás Cubas", 1, 1881, 1);
-insertLivro.run("1984", 0, 1949, 2);
-insertLivro.run("Harry Potter e a Pedra Filosofal", 1, 1997, 3);
-insertLivro.run("Outro Livro", 1, 1997, 3);
+insertProduto.run("Vestido Floral Midi", 1, 59.9, 1, 1);
+insertProduto.run("Blazer Alfaiataria Bege", 1, 89.9, 1, 1);
+insertProduto.run("Calça Jeans 501", 0, 79.9, 0, 2);
+insertProduto.run("Tênis Air Max 90", 1, 149.9, 2, 3);
+insertProduto.run("Moletom Vintage", 1, 69.9, 1, 3);
 
-console.log("livros");
-temp = db.prepare("SELECT * FROM livros").all();
+console.log("produtos");
+temp = db.prepare("SELECT * FROM produtos").all();
 console.log(temp);
 
 /* =========================
-   DETALHES DO LIVRO (1:1)
+   DETALHES DO PRODUTO (1:1)
 ========================= */
 const insertDetalhes = db.prepare(`
-  INSERT INTO detalhes_livro (livro_id, isbn, editora)
+  INSERT INTO detalhes_produto (produto_id, tamanho, condicao)
   VALUES (?, ?, ?)
 `);
 
-insertDetalhes.run(1, "978-85-359-0277-5", "Editora Globo");
-insertDetalhes.run(2, "978-85-359-0278-2", "Editora Globo");
-insertDetalhes.run(3, "978-0-452-28423-4", "Secker & Warburg");
-insertDetalhes.run(4, "978-85-325-3050-1", "Rocco");
+insertDetalhes.run(1, "M", "Seminovo");
+insertDetalhes.run(2, "G", "Ótimo estado");
+insertDetalhes.run(3, "40", "Bom estado");
+insertDetalhes.run(4, "39", "Seminovo");
 
-console.log("detalhes_livro");
-temp = db.prepare("SELECT * FROM detalhes_livro").all();
+console.log("detalhes_produto");
+temp = db.prepare("SELECT * FROM detalhes_produto").all();
 console.log(temp);
 
 /* =========================
@@ -77,32 +77,32 @@ const insertCategoria = db.prepare(`
   VALUES (?)
 `);
 
-insertCategoria.run("Romance");
-insertCategoria.run("Clássico");
-insertCategoria.run("Ficção Científica");
-insertCategoria.run("Fantasia");
+insertCategoria.run("Feminino");
+insertCategoria.run("Vintage");
+insertCategoria.run("Masculino");
+insertCategoria.run("Esportivo");
 
 console.log("categorias");
 temp = db.prepare("SELECT * FROM categorias").all();
 console.log(temp);
 
 /* =========================
-   LIVROS ↔ CATEGORIAS (N:N)
+   PRODUTOS ↔ CATEGORIAS (N:N)
 ========================= */
-const insertLivroCategoria = db.prepare(`
-  INSERT INTO livros_categorias (livro_id, categoria_id)
+const insertProdutoCategoria = db.prepare(`
+  INSERT INTO produtos_categorias (produto_id, categoria_id)
   VALUES (?, ?)
 `);
 
-insertLivroCategoria.run(1, 1);
-insertLivroCategoria.run(1, 2);
-insertLivroCategoria.run(2, 2);
-insertLivroCategoria.run(3, 3);
-insertLivroCategoria.run(3, 2);
-insertLivroCategoria.run(4, 4);
+insertProdutoCategoria.run(1, 1);
+insertProdutoCategoria.run(1, 2);
+insertProdutoCategoria.run(2, 2);
+insertProdutoCategoria.run(3, 3);
+insertProdutoCategoria.run(3, 2);
+insertProdutoCategoria.run(4, 4);
 
-console.log("livros_categorias");
-temp = db.prepare("SELECT * FROM livros_categorias").all();
+console.log("produtos_categorias");
+temp = db.prepare("SELECT * FROM produtos_categorias").all();
 console.log(temp);
 
 /* =========================

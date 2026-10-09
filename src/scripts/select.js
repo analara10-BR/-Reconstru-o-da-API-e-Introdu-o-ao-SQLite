@@ -7,67 +7,67 @@ const db = createDatabase(process.env.DB_NAME || "info.db");
 
 // .all() → retorna todas as linhas | .get() → retorna apenas a primeira linha
 
-console.log("Todos os livros:");
-console.table(db.prepare("SELECT * FROM livros").all());
+console.log("Todos os produtos:");
+console.table(db.prepare("SELECT * FROM produtos").all());
 
-console.log("Livro com id = 1:");
-console.log(db.prepare("SELECT * FROM livros WHERE id = ?").get(1));
+console.log("Produto com id = 1:");
+console.log(db.prepare("SELECT * FROM produtos WHERE id = ?").get(1));
 
-// 1:N → INNER JOIN entre livros e autores
-console.log("Livros e seus autores (1:N):");
+// 1:N → INNER JOIN entre produtos e marcas
+console.log("Produtos e suas marcas (1:N):");
 console.table(
   db
     .prepare(
       `
-      SELECT livros.titulo, livros.ano, autores.nome AS autor
-      FROM livros
-      LEFT JOIN autores ON autores.id = livros.autor_id
-      ORDER BY livros.ano
+      SELECT produtos.nome, produtos.preco, marcas.nome AS marca
+      FROM produtos
+      LEFT JOIN marcas ON marcas.id = produtos.marca_id
+      ORDER BY produtos.preco
       `,
     )
     .all(),
 );
 
-// 1:1 → livros e detalhes_livro
-console.log("Livros e seus detalhes (1:1):");
+// 1:1 → produtos e detalhes_produto
+console.log("Produtos e seus detalhes (1:1):");
 console.table(
   db
     .prepare(
       `
-      SELECT livros.titulo, detalhes_livro.isbn, detalhes_livro.editora
-      FROM livros
-      INNER JOIN detalhes_livro ON detalhes_livro.livro_id = livros.id
+      SELECT produtos.nome, detalhes_produto.tamanho, detalhes_produto.condicao
+      FROM produtos
+      INNER JOIN detalhes_produto ON detalhes_produto.produto_id = produtos.id
       `,
     )
     .all(),
 );
 
-// N:N → livros, livros_categorias e categorias
-console.log("Livros e suas categorias (N:N):");
+// N:N → produtos, produtos_categorias e categorias
+console.log("Produtos e suas categorias (N:N):");
 console.table(
   db
     .prepare(
       `
-      SELECT livros.titulo, GROUP_CONCAT(categorias.nome, ', ') AS categorias
-      FROM livros
-      INNER JOIN livros_categorias ON livros_categorias.livro_id = livros.id
-      INNER JOIN categorias ON categorias.id = livros_categorias.categoria_id
-      GROUP BY livros.id
+      SELECT produtos.nome, GROUP_CONCAT(categorias.nome, ', ') AS categorias
+      FROM produtos
+      INNER JOIN produtos_categorias ON produtos_categorias.produto_id = produtos.id
+      INNER JOIN categorias ON categorias.id = produtos_categorias.categoria_id
+      GROUP BY produtos.id
       `,
     )
     .all(),
 );
 
-// Agregação: quantidade de livros por autor
-console.log("Quantidade de livros por autor:");
+// Agregação: quantidade de produtos por marca
+console.log("Quantidade de produtos por marca:");
 console.table(
   db
     .prepare(
       `
-      SELECT autores.nome, COUNT(livros.id) AS total
-      FROM autores
-      LEFT JOIN livros ON livros.autor_id = autores.id
-      GROUP BY autores.id
+      SELECT marcas.nome, COUNT(produtos.id) AS total
+      FROM marcas
+      LEFT JOIN produtos ON produtos.marca_id = marcas.id
+      GROUP BY marcas.id
       ORDER BY total DESC
       `,
     )

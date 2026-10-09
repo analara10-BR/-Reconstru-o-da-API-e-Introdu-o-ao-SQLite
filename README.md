@@ -1,12 +1,13 @@
 # Atividade 01 — Reconstrução da API e Introdução ao SQLite
 
-**Biblioteca Virtual** — API REST em Node.js + Express, com páginas EJS + Bootstrap e banco de dados SQLite (`better-sqlite3`).
+**Brechó Online** — API REST em Node.js + Express, com páginas EJS + Bootstrap e banco de dados SQLite (`better-sqlite3`).
 
 **Alunas:** Leticia Ribeiro da Silva · Ana Lara Martins Inocencio · Nayelle Lima de Sousa
 
-> O material da Atividade N2 usa "produtos" e o material de SQLite/Testes usa "livros".
-> Neste projeto, o banco guarda **livros**; as páginas `/products` e a rota `/api/products`
-> mostram esses livros no formato `productsList` pedido na Atividade N2.
+> Tema: brechó online (roupas e acessórios de segunda mão). O material de SQLite usa livros/autores como exemplo;
+> aqui a mesma estrutura foi adaptada para **produtos** (peças), **marcas** (1:N), **detalhes_produto** (1:1: tamanho e
+> estado de conservação) e **categorias** (N:N). As páginas `/products` e a rota `/api/products` mostram os produtos no
+> formato `productsList` pedido na Atividade N2.
 
 ---
 
@@ -47,7 +48,7 @@ Para parar o servidor: `Ctrl + C` no terminal.
 | Testes automáticos (9 grupos de testes da API e do banco) | `npm test` |
 | Rotas da API | Abra `rest_client/api.http` e clique em **Send Request** acima de cada requisição |
 | Páginas | <http://localhost:3000/home>, `/about`, `/contact`, `/products`, `/products/1` |
-| CRUD pela interface | Em `/products`: **+ Cadastrar livro** (POST) e busca. Em **Ver detalhes**: **Salvar alterações** (PATCH) e **Excluir livro** (DELETE) |
+| CRUD pela interface | Em `/products`: **+ Cadastrar produto** (POST) e busca. Em **Ver detalhes**: **Salvar alterações** (PATCH) e **Excluir produto** (DELETE) |
 | Banco de dados | Abra `src/databases/info.db` com o SQLite Viewer |
 | Comandos SQL do material | `npm run db:select`, `npm run db:update`, `npm run db:delete` (depois rode `npm run db:populate` para restaurar os dados) |
 | Consultas SQL puras | `src/scripts/consultas.sql` |
@@ -74,10 +75,10 @@ Para parar o servidor: `Ctrl + C` no terminal.
 ├── src/
 │   ├── app.js                 # configuração do Express (EJS, middlewares, rotas)
 │   ├── server.js              # ponto de entrada (app.listen)
-│   ├── controllers/           # api, products, livros, autores, categorias, usuarios
+│   ├── controllers/           # api, products, produtos, marcas, categorias, usuarios
 │   ├── db_config/             # database.js (cria tabelas) e connection.js (conexão única)
 │   ├── databases/             # info.db (gerado, fora do Git)
-│   ├── middlewares/           # debug, mcors, verify.id, validate.livro, errors (404 + 500)
+│   ├── middlewares/           # debug, mcors, verify.id, validate.produto, errors (404 + 500)
 │   ├── models/                # SQL de cada tabela (prepared statements)
 │   ├── routes/                # rotas da API e das páginas
 │   ├── scripts/               # populate, select, update, delete e consultas.sql
@@ -94,11 +95,11 @@ Arquivo: `src/databases/info.db` (criado automaticamente). `PRAGMA foreign_keys 
 | Tabela | Colunas principais | Relacionamento |
 | --- | --- | --- |
 | `usuarios` | id, nome, email (UNIQUE), idade, altura, ativo, saldo, criado_em, ultimo_login | — |
-| `autores` | id, nome | 1 autor → N livros |
-| `livros` | id, titulo, disponibilidade, ano, exemplares, autor_id → autores | `ON DELETE SET NULL` |
-| `detalhes_livro` | id, livro_id (UNIQUE) → livros, isbn, editora | 1:1 com livros, `ON DELETE CASCADE` |
+| `marcas` | id, nome | 1 marca → N produtos |
+| `produtos` | id, nome, disponibilidade, preco, estoque, marca_id → marcas | `ON DELETE SET NULL` |
+| `detalhes_produto` | id, produto_id (UNIQUE) → produtos, tamanho, condicao | 1:1 com produtos, `ON DELETE CASCADE` |
 | `categorias` | id, nome (UNIQUE) | — |
-| `livros_categorias` | livro_id, categoria_id (PK composta) | N:N, `ON DELETE CASCADE` |
+| `produtos_categorias` | produto_id, categoria_id (PK composta) | N:N, `ON DELETE CASCADE` |
 
 ## 7. Rotas
 
@@ -110,41 +111,41 @@ Arquivo: `src/databases/info.db` (criado automaticamente). `PRAGMA foreign_keys 
 | GET | `/equipe` | Integrantes da equipe |
 | GET | `/api/info` | Status da API |
 | GET | `/api/info/:id` | 200 se id = 42, 400 se não for número, 500 (errorHandler) caso contrário |
-| GET | `/api/home` | `{ titulo: "Biblioteca Virtual" }` |
-| GET | `/api/products` | `{ productsList: [...] }` (livros do banco) |
+| GET | `/api/home` | `{ titulo: "Brechó Online" }` |
+| GET | `/api/products` | `{ productsList: [...] }` (produtos do banco) |
 | GET | `/api/products/:id` | Um produto ou 404 |
 
-### CRUD de livros
+### CRUD de produtos
 
 | Método | Rota | Descrição | Status |
 | --- | --- | --- | --- |
-| GET | `/api/livros` | Lista todos (`?q=termo` busca por título, autor ou categoria) | 200 |
-| GET | `/api/livros/:id` | Busca por id | 200 / 400 / 404 |
-| POST | `/api/livros` | Cria livro | 201 / 400 |
-| PUT | `/api/livros/:id` | Substitui o livro inteiro | 200 / 400 / 404 |
-| PATCH | `/api/livros/:id` | Atualiza só os campos enviados | 200 / 400 / 404 |
-| DELETE | `/api/livros/:id` | Remove livro | 200 / 404 |
-| POST | `/api/livros/:livroId/categorias/:categoriaId` | Vincula categoria (N:N) | 201 / 400 / 404 |
-| DELETE | `/api/livros/:livroId/categorias/:categoriaId` | Remove vínculo | 200 / 404 |
+| GET | `/api/produtos` | Lista todos (`?q=termo` busca por nome, marca ou categoria) | 200 |
+| GET | `/api/produtos/:id` | Busca por id | 200 / 400 / 404 |
+| POST | `/api/produtos` | Cria produto | 201 / 400 |
+| PUT | `/api/produtos/:id` | Substitui o produto inteiro | 200 / 400 / 404 |
+| PATCH | `/api/produtos/:id` | Atualiza só os campos enviados | 200 / 400 / 404 |
+| DELETE | `/api/produtos/:id` | Remove produto | 200 / 404 |
+| POST | `/api/produtos/:produtoId/categorias/:categoriaId` | Vincula categoria (N:N) | 201 / 400 / 404 |
+| DELETE | `/api/produtos/:produtoId/categorias/:categoriaId` | Remove vínculo | 200 / 404 |
 
-Exemplo de corpo (POST/PUT) — só `titulo` é obrigatório:
+Exemplo de corpo (POST/PUT) — só `nome` é obrigatório:
 
 ```json
 {
-  "titulo": "Quincas Borba",
-  "ano": 1891,
+  "nome": "Jaqueta Jeans Oversized",
+  "preco": 120.0,
   "disponivel": true,
-  "exemplares": 3,
-  "autor_id": 1,
-  "isbn": "978-85-000-0000-1",
-  "editora": "Editora Globo",
+  "estoque": 3,
+  "marca_id": 1,
+  "tamanho": "GG",
+  "condicao": "Seminovo",
   "categoria_ids": [1, 2]
 }
 ```
 
-### Autores, categorias e usuários
+### Marcas, categorias e usuários
 
-`GET/POST /api/autores`, `GET/PUT/DELETE /api/autores/:id` (o GET por id traz os livros do autor) ·
+`GET/POST /api/marcas`, `GET/PUT/DELETE /api/marcas/:id` (o GET por id traz os produtos da marca) ·
 `GET/POST /api/categorias`, `GET/PUT/DELETE /api/categorias/:id` ·
 `GET/POST /api/usuarios`, `GET/DELETE /api/usuarios/:id`
 

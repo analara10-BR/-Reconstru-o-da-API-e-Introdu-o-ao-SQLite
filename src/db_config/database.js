@@ -43,7 +43,7 @@ const createDatabase = (dbName = "info.db") => {
 
   db.prepare(
     `
-    CREATE TABLE IF NOT EXISTS autores (
+    CREATE TABLE IF NOT EXISTS marcas (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       nome TEXT NOT NULL
     );
@@ -51,52 +51,52 @@ const createDatabase = (dbName = "info.db") => {
   ).run();
 
   // Relacionamento 1:N
-  // Exemplo: Autor → Livros
-  // Um autor pode ter vários livros.
-  // SET NULL: Isso mantém o livro, mas remove o vínculo.
-  // A coluna "exemplares" foi acrescentada porque o arquivo de testes da API (api.http) envia esse campo.
+  // Exemplo: Marca → Produtos
+  // Uma marca pode ter vários produtos.
+  // SET NULL: Isso mantém o produto, mas remove o vínculo.
+  // A coluna "estoque" foi acrescentada porque o arquivo de testes da API (api.http) envia esse campo.
   db.prepare(
     `
-    CREATE TABLE IF NOT EXISTS livros (
+    CREATE TABLE IF NOT EXISTS produtos (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      titulo TEXT NOT NULL,
+      nome TEXT NOT NULL,
       disponibilidade INTEGER NOT NULL,
-      ano INTEGER,
-      exemplares INTEGER NOT NULL DEFAULT 1 CHECK (exemplares >= 0),
-      autor_id INTEGER,
-      FOREIGN KEY (autor_id) REFERENCES autores(id) ON DELETE SET NULL
+      preco REAL CHECK (preco >= 0),
+      estoque INTEGER NOT NULL DEFAULT 1 CHECK (estoque >= 0),
+      marca_id INTEGER,
+      FOREIGN KEY (marca_id) REFERENCES marcas(id) ON DELETE SET NULL
     );
     `,
   ).run();
 
   // Relacionamento 1:1
-  // Exemplo: Livro ↔ DetalhesLivro
-  // Cada livro tem um conjunto de detalhes.
-  // UNIQUE garante que um livro só tenha um detalhe.
-  // Um detalhe de livro faz sentido sem o livro? NÃO -> USAR ON DELETE CASCADE
+  // Exemplo: Produto ↔ DetalhesProduto
+  // Cada produto tem um conjunto de detalhes.
+  // UNIQUE garante que um produto só tenha um detalhe.
+  // Um detalhe de produto faz sentido sem o produto? NÃO -> USAR ON DELETE CASCADE
   db.prepare(
     `
-    CREATE TABLE IF NOT EXISTS detalhes_livro (
+    CREATE TABLE IF NOT EXISTS detalhes_produto (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      livro_id INTEGER UNIQUE,
-      isbn TEXT,
-      editora TEXT,
-      FOREIGN KEY (livro_id) REFERENCES livros(id) ON DELETE CASCADE
+      produto_id INTEGER UNIQUE,
+      tamanho TEXT,
+      condicao TEXT,
+      FOREIGN KEY (produto_id) REFERENCES produtos(id) ON DELETE CASCADE
     );
     `,
   ).run();
 
   // Relacionamento N:N
-  // Exemplo: Livros ↔ Categorias
-  // Um livro pode ter várias categorias
-  // Uma categoria pode ter vários livros
+  // Exemplo: Produtos ↔ Categorias
+  // Um produto pode ter várias categorias
+  // Uma categoria pode ter vários produtos
   db.prepare(
     `
-    CREATE TABLE IF NOT EXISTS livros_categorias (
-      livro_id INTEGER,
+    CREATE TABLE IF NOT EXISTS produtos_categorias (
+      produto_id INTEGER,
       categoria_id INTEGER,
-      PRIMARY KEY (livro_id, categoria_id),
-      FOREIGN KEY (livro_id) REFERENCES livros(id) ON DELETE CASCADE,
+      PRIMARY KEY (produto_id, categoria_id),
+      FOREIGN KEY (produto_id) REFERENCES produtos(id) ON DELETE CASCADE,
       FOREIGN KEY (categoria_id) REFERENCES categorias(id) ON DELETE CASCADE
     );
     `,

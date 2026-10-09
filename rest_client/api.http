@@ -40,7 +40,7 @@ Accept: {{contentType}}
 ### Dados da página home
 GET {{baseUrl}}/api/home
 
-### Lista de produtos (livros do banco)
+### Lista de produtos (produtos do banco)
 GET {{baseUrl}}/api/products
 
 ### Produto por id
@@ -49,127 +49,127 @@ GET {{baseUrl}}/api/products/1
 ### Produto inexistente -> 404
 GET {{baseUrl}}/api/products/999
 
-# ===================== CRUD Livros (SQLite) =====================
+# ===================== CRUD Produtos (SQLite) =====================
 
-### GET - Todos os livros
-GET {{baseUrl}}/api/livros
+### GET - Todos os produtos
+GET {{baseUrl}}/api/produtos
 
-### GET - Busca por título, autor ou categoria
-GET {{baseUrl}}/api/livros?q=machado
+### GET - Busca por nome, marca ou categoria
+GET {{baseUrl}}/api/produtos?q=zara
 
-### GET - Livro por id
-GET {{baseUrl}}/api/livros/1
+### GET - Produto por id
+GET {{baseUrl}}/api/produtos/1
 
-### GET - Livro inexistente -> 404
-GET {{baseUrl}}/api/livros/999
+### GET - Produto inexistente -> 404
+GET {{baseUrl}}/api/produtos/999
 
-### POST - Cadastrar livro
-POST {{baseUrl}}/api/livros
+### POST - Cadastrar produto
+POST {{baseUrl}}/api/produtos
 Content-Type: {{contentType}}
 
 {
-    "titulo": "Claro Enigma",
-    "ano": 1951,
+    "nome": "Saia Plissada",
+    "preco": 49.9,
     "disponivel": true,
-    "exemplares": 10
+    "estoque": 10
 }
 
-### POST - Cadastrar livro com autor, detalhes (1:1) e categorias (N:N)
-POST {{baseUrl}}/api/livros
+### POST - Cadastrar produto com marca, detalhes (1:1) e categorias (N:N)
+POST {{baseUrl}}/api/produtos
 Content-Type: {{contentType}}
 
 {
-    "titulo": "Quincas Borba",
-    "ano": 1891,
+    "nome": "Jaqueta Jeans Oversized",
+    "preco": 120.0,
     "disponivel": true,
-    "exemplares": 3,
-    "autor_id": 1,
-    "isbn": "978-85-000-0000-1",
-    "editora": "Editora Globo",
+    "estoque": 3,
+    "marca_id": 1,
+    "tamanho": "GG",
+    "condicao": "Seminovo",
     "categoria_ids": [1, 2]
 }
 
 ### POST - Dados inválidos -> 400
-POST {{baseUrl}}/api/livros
+POST {{baseUrl}}/api/produtos
 Content-Type: {{contentType}}
 
 {
-    "ano": "mil novecentos"
+    "preco": "mil novecentos"
 }
 
-### POST - Autor inexistente (FOREIGN KEY) -> 400
-POST {{baseUrl}}/api/livros
+### POST - Marca inexistente (FOREIGN KEY) -> 400
+POST {{baseUrl}}/api/produtos
 Content-Type: {{contentType}}
 
 {
-    "titulo": "Livro sem autor válido",
-    "autor_id": 999
+    "nome": "Produto com marca inválida",
+    "marca_id": 999
 }
 
-### PUT - Atualizar livro COMPLETO (id = 1)
-PUT {{baseUrl}}/api/livros/1
+### PUT - Atualizar produto COMPLETO (id = 1)
+PUT {{baseUrl}}/api/produtos/1
 Content-Type: {{contentType}}
 
 {
-    "titulo": "Livro Atualizado",
-    "ano": 2000,
+    "nome": "Produto Atualizado",
+    "preco": 99.5,
     "disponivel": false,
-    "exemplares": 5
+    "estoque": 5
 }
 
 ### PATCH - Atualização PARCIAL (id = 1)
-PATCH {{baseUrl}}/api/livros/1
+PATCH {{baseUrl}}/api/produtos/1
 Content-Type: {{contentType}}
 
 {
-    "titulo": "Título Parcialmente Atualizado"
+    "nome": "Nome Parcialmente Atualizado"
 }
 
-### N:N - Vincular a categoria 4 ao livro 2
-POST {{baseUrl}}/api/livros/2/categorias/4
+### N:N - Vincular a categoria 4 ao produto 2
+POST {{baseUrl}}/api/produtos/2/categorias/4
 
-### N:N - Remover o vínculo da categoria 4 com o livro 2
-DELETE {{baseUrl}}/api/livros/2/categorias/4
+### N:N - Remover o vínculo da categoria 4 com o produto 2
+DELETE {{baseUrl}}/api/produtos/2/categorias/4
 
-### DELETE - Remover livro (id = 1)
-DELETE {{baseUrl}}/api/livros/1
+### DELETE - Remover produto (id = 1)
+DELETE {{baseUrl}}/api/produtos/1
 
-### DELETE - Livro inexistente -> 404
-DELETE {{baseUrl}}/api/livros/999
+### DELETE - Produto inexistente -> 404
+DELETE {{baseUrl}}/api/produtos/999
 
-# ===================== Autores (1:N) =====================
+# ===================== Marcas (1:N) =====================
 
-### Listar autores
-GET {{baseUrl}}/api/autores
+### Listar marcas
+GET {{baseUrl}}/api/marcas
 
-### Autor e seus livros
-GET {{baseUrl}}/api/autores/3
+### Marca e seus produtos
+GET {{baseUrl}}/api/marcas/3
 
-### Cadastrar autor
-POST {{baseUrl}}/api/autores
+### Cadastrar marca
+POST {{baseUrl}}/api/marcas
 Content-Type: {{contentType}}
 
 {
-    "nome": "Clarice Lispector"
+    "nome": "Adidas"
 }
 
-### Atualizar autor
-PUT {{baseUrl}}/api/autores/4
+### Atualizar marca
+PUT {{baseUrl}}/api/marcas/4
 Content-Type: {{contentType}}
 
 {
-    "nome": "Clarice Lispector (atualizado)"
+    "nome": "Adidas Originals"
 }
 
-### Deletar autor (os livros ficam com autor_id = NULL - ON DELETE SET NULL)
-DELETE {{baseUrl}}/api/autores/3
+### Deletar marca (os produtos ficam com marca_id = NULL - ON DELETE SET NULL)
+DELETE {{baseUrl}}/api/marcas/3
 
 # ===================== Categorias (N:N) =====================
 
 ### Listar categorias
 GET {{baseUrl}}/api/categorias
 
-### Categoria e seus livros
+### Categoria e seus produtos
 GET {{baseUrl}}/api/categorias/2
 
 ### Cadastrar categoria
@@ -177,7 +177,7 @@ POST {{baseUrl}}/api/categorias
 Content-Type: {{contentType}}
 
 {
-    "nome": "Poesia"
+    "nome": "Acessórios"
 }
 
 ### Atualizar categoria
@@ -185,7 +185,7 @@ PUT {{baseUrl}}/api/categorias/5
 Content-Type: {{contentType}}
 
 {
-    "nome": "Poesia Brasileira"
+    "nome": "Acessórios Femininos"
 }
 
 ### Deletar categoria (vínculos removidos por ON DELETE CASCADE)

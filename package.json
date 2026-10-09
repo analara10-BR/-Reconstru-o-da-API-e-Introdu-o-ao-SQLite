@@ -1,7 +1,7 @@
 {
-  "name": "api-2026-biblioteca-sqlite",
+  "name": "api-2026-brecho-sqlite",
   "version": "1.0.0",
-  "description": "API Biblioteca - Reconstrução da API (Express + EJS) e Introdução ao SQLite",
+  "description": "API Brechó - Reconstrução da API (Express + EJS) e Introdução ao SQLite",
   "main": "src/server.js",
   "type": "module",
   "scripts": {

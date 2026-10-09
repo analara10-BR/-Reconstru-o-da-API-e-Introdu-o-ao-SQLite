@@ -5,22 +5,28 @@ function escapeHtml(valor) {
   return String(valor ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 }
 
+// Formata o preço em reais (ex.: R$ 59,90)
+function formatarPreco(valor) {
+  if (valor === null || valor === undefined) return "Sem preço";
+  return Number(valor).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
 function mostrarMensagem(texto, tipo = "success") {
   document.getElementById("mensagem").innerHTML = `<div class="alert alert-${tipo}">${escapeHtml(texto)}</div>`;
 }
 
-// Preenche o <select> de autores e os checkboxes de categorias a partir da API
-async function carregarOpcoes(autorSelecionado = null, categoriasSelecionadas = []) {
-  const [autores, categorias] = await Promise.all([
-    fetch("/api/autores").then((r) => r.json()),
+// Preenche o <select> de marcas e os checkboxes de categorias a partir da API
+async function carregarOpcoes(marcaSelecionado = null, categoriasSelecionadas = []) {
+  const [marcas, categorias] = await Promise.all([
+    fetch("/api/marcas").then((r) => r.json()),
     fetch("/api/categorias").then((r) => r.json()),
   ]);
 
-  const select = document.getElementById("autor_id");
+  const select = document.getElementById("marca_id");
   select.innerHTML =
-    '<option value="">(sem autor)</option>' +
-    autores
-      .map((a) => `<option value="${a.id}" ${a.id === autorSelecionado ? "selected" : ""}>${escapeHtml(a.nome)}</option>`)
+    '<option value="">(sem marca)</option>' +
+    marcas
+      .map((a) => `<option value="${a.id}" ${a.id === marcaSelecionado ? "selected" : ""}>${escapeHtml(a.nome)}</option>`)
       .join("");
 
   document.getElementById("categorias-checks").innerHTML = categorias
@@ -35,18 +41,18 @@ async function carregarOpcoes(autorSelecionado = null, categoriasSelecionadas = 
     .join("");
 }
 
-// Lê o formulário e monta o JSON esperado pela API /api/livros
+// Lê o formulário e monta o JSON esperado pela API /api/produtos
 function lerFormulario() {
   const valor = (id) => document.getElementById(id).value.trim();
   const numeroOuNull = (id) => (valor(id) === "" ? null : Number(valor(id)));
   return {
-    titulo: valor("titulo"),
-    ano: numeroOuNull("ano"),
-    exemplares: numeroOuNull("exemplares") ?? 1,
+    nome: valor("nome"),
+    preco: numeroOuNull("preco"),
+    estoque: numeroOuNull("estoque") ?? 1,
     disponivel: document.getElementById("disponivel").checked,
-    autor_id: numeroOuNull("autor_id"),
-    isbn: valor("isbn") || null,
-    editora: valor("editora") || null,
+    marca_id: numeroOuNull("marca_id"),
+    tamanho: valor("tamanho") || null,
+    condicao: valor("condicao") || null,
     categoria_ids: [...document.querySelectorAll("#categorias-checks input:checked")].map((el) => Number(el.value)),
   };
 }

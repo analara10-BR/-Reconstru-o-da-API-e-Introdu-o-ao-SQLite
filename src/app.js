@@ -5,8 +5,8 @@ import expressLayouts from "express-ejs-layouts";
 import db from "./db_config/connection.js";
 import { router as apiRouter } from "./routes/api.routes.js";
 import { router as productsRouter } from "./routes/products.routes.js";
-import { router as livrosRouter } from "./routes/livros.routes.js";
-import { router as autoresRouter } from "./routes/autores.routes.js";
+import { router as produtosRouter } from "./routes/produtos.routes.js";
+import { router as marcasRouter } from "./routes/marcas.routes.js";
 import { router as categoriasRouter } from "./routes/categorias.routes.js";
 import { router as usuariosRouter } from "./routes/usuarios.routes.js";
 import { router as viewsRouter } from "./routes/views.routes.js";
@@ -47,8 +47,8 @@ app.get("/equipe", (req, res) => {
 // Rotas da API (JSON)
 app.use("/api", apiRouter);
 app.use("/api", productsRouter);
-app.use("/api", livrosRouter);
-app.use("/api", autoresRouter);
+app.use("/api", produtosRouter);
+app.use("/api", marcasRouter);
 app.use("/api", categoriasRouter);
 app.use("/api", usuariosRouter);
 

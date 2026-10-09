@@ -25,7 +25,7 @@ export default class ApiController {
 
   async getHome(req, res, next) {
     try {
-      const dados = { titulo: "Biblioteca Virtual" };
+      const dados = { titulo: "Brechó Online" };
       res.json(dados); // Entrega o JSON puro
     } catch (error) {
       next(error);
