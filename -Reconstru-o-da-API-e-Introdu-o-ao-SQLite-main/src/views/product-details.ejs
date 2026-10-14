@@ -1,0 +1,22 @@
+<section class="container detail-page">
+  <a class="back-link" href="/products">← Voltar ao garimpo</a>
+  <div id="mensagem" aria-live="polite"></div>
+  <div id="container-produto" class="detail-container"><p class="muted-note">Carregando os detalhes da peça…</p></div>
+  <form id="form-editar" class="editor-card mt-5 d-none">
+    <div class="editor-heading"><div><span class="eyebrow">PAINEL DO CATÁLOGO</span><h2>Editar peça</h2></div><p>As alterações são salvas no banco de dados.</p></div>
+    <div class="row g-3">
+      <div class="col-md-6"><label class="form-label" for="nome">Nome *</label><input class="form-control" id="nome" required /></div>
+      <div class="col-md-3"><label class="form-label" for="preco">Preço (R$)</label><input class="form-control" id="preco" step="0.01" min="0" type="number" /></div>
+      <div class="col-md-3"><label class="form-label" for="estoque">Quantidade</label><input class="form-control" id="estoque" type="number" min="0" /></div>
+      <div class="col-md-4"><label class="form-label" for="marca_id">Marca</label><select class="form-select" id="marca_id"><option value="">Sem marca</option></select></div>
+      <div class="col-md-4"><label class="form-label" for="tamanho">Tamanho</label><input class="form-control" id="tamanho" /></div>
+      <div class="col-md-4"><label class="form-label" for="condicao">Estado da peça</label><input class="form-control" id="condicao" /></div>
+      <div class="col-12"><label class="form-label" for="imagem_url">Link da foto</label><input class="form-control" id="imagem_url" type="url" placeholder="https://…" /></div>
+      <div class="col-12"><label class="form-label" for="descricao">Descrição</label><textarea class="form-control" id="descricao" rows="3" maxlength="2000"></textarea></div>
+      <div class="col-12"><span class="form-label d-block">Categorias</span><div id="categorias-checks" class="d-flex flex-wrap gap-3"></div></div>
+      <div class="col-12"><div class="form-check"><input class="form-check-input" type="checkbox" id="disponivel" /><label class="form-check-label" for="disponivel">Peça disponível para venda</label></div></div>
+    </div>
+    <div class="mt-4 d-flex flex-wrap gap-2"><button class="btn btn-brand" type="submit">Salvar alterações</button><button class="btn btn-outline-danger" type="button" id="btn-excluir">Excluir produto</button></div>
+  </form>
+</section>
+<script src="/scripts/product-details.js"></script>
