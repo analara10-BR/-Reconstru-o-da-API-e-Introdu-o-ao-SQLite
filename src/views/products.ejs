@@ -1,0 +1,59 @@
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <h1 class="mb-0">Produtos</h1>
+  <button class="btn btn-brand" type="button" data-bs-toggle="collapse" data-bs-target="#form-area">
+    + Cadastrar produto
+  </button>
+</div>
+
+<!-- Formulário de cadastro (POST /api/produtos) -->
+<div id="form-area" class="collapse mb-4">
+  <form id="form-produto" class="card card-body">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label" for="nome">Nome *</label>
+        <input class="form-control" id="nome" name="nome" required />
+      </div>
+      <div class="col-md-3">
+        <label class="form-label" for="preco">Preço</label>
+        <input class="form-control" id="preco" step="0.01" min="0" name="preco" type="number" />
+      </div>
+      <div class="col-md-3">
+        <label class="form-label" for="estoque">Estoque</label>
+        <input class="form-control" id="estoque" name="estoque" type="number" min="0" value="1" />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label" for="marca_id">Marca</label>
+        <select class="form-select" id="marca_id" name="marca_id"><option value="">(sem marca)</option></select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label" for="tamanho">Tamanho</label>
+        <input class="form-control" id="tamanho" name="tamanho" />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label" for="condicao">Condição</label>
+        <input class="form-control" id="condicao" name="condicao" />
+      </div>
+      <div class="col-12">
+        <span class="form-label d-block">Categorias</span>
+        <div id="categorias-checks" class="d-flex flex-wrap gap-3"></div>
+      </div>
+      <div class="col-12 form-check ms-2">
+        <input class="form-check-input" type="checkbox" id="disponivel" name="disponivel" checked />
+        <label class="form-check-label" for="disponivel">Disponível</label>
+      </div>
+    </div>
+    <div class="mt-3"><button class="btn btn-success" type="submit">Salvar</button></div>
+  </form>
+</div>
+
+<form id="form-busca" class="input-group mb-3">
+  <input class="form-control" id="busca" placeholder="Buscar por nome, marca ou categoria" />
+  <button class="btn btn-outline-secondary" type="submit">Buscar</button>
+</form>
+
+<div id="mensagem"></div>
+
+<div id="container-produtos" class="row g-3"></div>
+
+<script src="/scripts/common.js"></script>
+<script src="/scripts/products.js"></script>

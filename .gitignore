@@ -1,0 +1,15 @@
+# Dependências
+node_modules/
+
+# Variáveis de ambiente
+.env
+.env.*
+!.env.example
+
+# Banco de dados SQLite (gerado automaticamente ao iniciar o servidor)
+src/databases/*.db
+src/databases/*.db-*
+
+# Logs
+*.log
+npm-debug.log*
