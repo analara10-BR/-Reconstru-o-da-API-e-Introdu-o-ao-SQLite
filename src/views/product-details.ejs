@@ -1,0 +1,46 @@
+<section class="container detail-page">
+  <a class="back-link" href="/products">← Voltar ao garimpo</a>
+  <div id="mensagem" aria-live="polite"></div>
+  <div id="container-produto" class="detail-container"><p class="muted-note">Carregando os detalhes da peça…</p></div>
+  <section id="checkout-area" class="editor-card mt-4 d-none" aria-labelledby="checkout-titulo">
+    <div class="editor-heading"><div><span class="eyebrow">FINALIZAR COMPRA</span><h2 id="checkout-titulo">Onde você quer receber?</h2></div><p>Preencha o endereço para registrar seu pedido. O pagamento e o frete serão combinados com o brechó.</p></div>
+    <div id="checkout-mensagem" aria-live="polite"></div>
+    <% if (typeof usuario !== "undefined" && usuario) { %>
+    <form id="form-checkout">
+      <div class="row g-3">
+        <div class="col-md-6"><label class="form-label" for="compra-nome">Nome completo *</label><input class="form-control" id="compra-nome" name="nome" value="<%= usuario.nome %>" required maxlength="120"></div>
+        <div class="col-md-6"><label class="form-label" for="compra-telefone">Telefone *</label><input class="form-control" id="compra-telefone" name="telefone" value="<%= usuario.telefone || '' %>" required maxlength="30"></div>
+        <div class="col-md-4"><label class="form-label" for="compra-cep">CEP *</label><input class="form-control" id="compra-cep" name="cep" required maxlength="12" autocomplete="postal-code"></div>
+        <div class="col-md-4"><label class="form-label" for="compra-estado">Estado *</label><input class="form-control" id="compra-estado" name="estado" required maxlength="80"></div>
+        <div class="col-md-4"><label class="form-label" for="compra-cidade">Cidade *</label><input class="form-control" id="compra-cidade" name="cidade" required maxlength="100" autocomplete="address-level2"></div>
+        <div class="col-md-6"><label class="form-label" for="compra-bairro">Bairro *</label><input class="form-control" id="compra-bairro" name="bairro" required maxlength="100"></div>
+        <div class="col-md-6"><label class="form-label" for="compra-rua">Rua / Logradouro *</label><input class="form-control" id="compra-rua" name="logradouro" required maxlength="160" autocomplete="street-address"></div>
+        <div class="col-md-4"><label class="form-label" for="compra-numero">Número *</label><input class="form-control" id="compra-numero" name="numero" required maxlength="20"></div>
+        <div class="col-md-8"><label class="form-label" for="compra-complemento">Complemento</label><input class="form-control" id="compra-complemento" name="complemento" maxlength="100" placeholder="Apartamento, referência…"></div>
+      </div>
+      <p class="form-text mt-3">Ao confirmar, o pedido ficará registrado como pendente. Nenhum pagamento será cobrado pelo site nesta etapa.</p>
+      <button class="btn btn-brand mt-2" type="submit">Confirmar pedido</button>
+      <button class="btn btn-outline-brand mt-2" type="button" id="cancelar-checkout">Cancelar</button>
+    </form>
+    <% } else { %>
+    <p>Para comprar, entre na sua conta ou crie um cadastro.</p>
+    <div class="d-flex gap-2 flex-wrap"><a class="btn btn-brand" href="/login?voltar=<%= encodeURIComponent('/products/' + (typeof produtoId !== 'undefined' ? produtoId : '')) %>">Entrar</a><a class="btn btn-outline-brand" href="/cadastro">Criar conta</a></div>
+    <% } %>
+  </section>
+  <form id="form-editar" class="editor-card mt-5 d-none">
+    <div class="editor-heading"><div><span class="eyebrow">PAINEL DO CATÁLOGO</span><h2>Editar peça</h2></div><p>Só quem anunciou a peça pode editá-la. As alterações são salvas no banco de dados.</p></div>
+    <div class="row g-3">
+      <div class="col-md-6"><label class="form-label" for="nome">Nome *</label><input class="form-control" id="nome" required maxlength="120" /></div>
+      <div class="col-md-3"><label class="form-label" for="preco">Preço (R$) *</label><input class="form-control" id="preco" step="0.01" min="0" type="number" required /></div>
+      <div class="col-md-3"><label class="form-label" for="id_categoria">Categoria *</label><select class="form-select" id="id_categoria" required><option value="">Escolha…</option></select></div>
+      <div class="col-md-6"><label class="form-label" for="tamanho">Tamanho</label><input class="form-control" id="tamanho" maxlength="20" /></div>
+      <div class="col-md-6"><label class="form-label" for="estado_conservacao">Estado da peça</label><input class="form-control" id="estado_conservacao" maxlength="60" /></div>
+      <div class="col-md-6"><label class="form-label" for="foto">Trocar foto</label><input class="form-control" id="foto" type="file" accept="image/jpeg,image/png,image/webp,image/gif" /></div>
+      <div class="col-md-6"><label class="form-label" for="imagem_url">Link da foto</label><input class="form-control" id="imagem_url" type="text" placeholder="https://…" /></div>
+      <div class="col-12"><label class="form-label" for="descricao">Descrição</label><textarea class="form-control" id="descricao" rows="3" maxlength="2000"></textarea></div>
+      <div class="col-12"><div class="form-check"><input class="form-check-input" type="checkbox" id="disponibilidade" /><label class="form-check-label" for="disponibilidade">Peça disponível para venda</label></div></div>
+    </div>
+    <div class="mt-4 d-flex flex-wrap gap-2"><button class="btn btn-brand" type="submit">Salvar alterações</button><button class="btn btn-outline-danger" type="button" id="btn-excluir">Excluir produto</button></div>
+  </form>
+</section>
+<script src="/scripts/product-details.js"></script>

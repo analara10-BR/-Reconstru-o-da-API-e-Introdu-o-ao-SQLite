@@ -1,0 +1,51 @@
+<section class="catalog-hero container">
+  <div><span class="eyebrow">O GARIMPO COMEÇA AQUI</span><h1>Peças únicas.<br /><em>Novas possibilidades.</em></h1><p>Explore o catálogo, encontre seu favorito e dê mais uma vida a uma boa peça.</p></div>
+  <div class="catalog-count"><span>FEITO PARA REENCONTRAR</span><strong>01—∞</strong><small>histórias em cada escolha</small></div>
+</section>
+<section class="container catalog-section">
+  <div class="catalog-toolbar">
+    <form id="form-busca" class="search-form" role="search">
+      <label class="visually-hidden" for="busca">Buscar produtos</label>
+      <span aria-hidden="true">⌕</span><input id="busca" type="search" placeholder="Busque por peça, categoria ou anunciante…" />
+      <button type="submit" aria-label="Buscar">Buscar</button>
+    </form>
+    <button class="btn btn-brand" type="button" data-bs-toggle="collapse" data-bs-target="#form-area" aria-expanded="false" aria-controls="form-area">＋ Cadastrar produto</button>
+  </div>
+  <div class="catalog-filters" aria-label="Filtros do catálogo">
+    <label><span>Categoria</span><select id="filtro-categoria" class="form-select"><option value="">Todas</option></select></label>
+    <label><span>Tamanho</span><select id="filtro-tamanho" class="form-select"><option value="">Todos</option></select></label>
+    <label><span>Condição</span><select id="filtro-condicao" class="form-select"><option value="">Todas</option></select></label>
+    <label><span>Preço mínimo</span><input id="preco-min" class="form-control" type="number" min="0" placeholder="R$ 0" /></label>
+    <label><span>Preço máximo</span><input id="preco-max" class="form-control" type="number" min="0" placeholder="Sem limite" /></label>
+    <button class="filter-reset" id="limpar-filtros" type="button">Limpar filtros ↺</button>
+  </div>
+  <div id="form-area" class="collapse mb-4">
+    <% if (typeof usuario !== "undefined" && usuario) { %>
+    <%# Formulário de anúncio: só aparece para quem está logado (a API também bloqueia com o middleware exigirLogin) %>
+    <form id="form-produto" class="editor-card">
+      <div class="editor-heading"><div><span class="eyebrow">PAINEL DO CATÁLOGO</span><h2>Cadastrar uma peça</h2></div><p>Preencha os dados para ela aparecer no catálogo.</p></div>
+      <div class="row g-3">
+        <div class="col-md-6"><label class="form-label" for="nome">Nome da peça *</label><input class="form-control" id="nome" name="nome" required maxlength="120" placeholder="Ex.: Camisa de linho" /></div>
+        <div class="col-md-3"><label class="form-label" for="preco">Preço (R$) *</label><input class="form-control" id="preco" step="0.01" min="0" name="preco" type="number" required placeholder="49,90" /></div>
+        <div class="col-md-3"><label class="form-label" for="id_categoria">Categoria *</label><select class="form-select" id="id_categoria" name="id_categoria" required><option value="">Escolha…</option></select></div>
+        <div class="col-md-6"><label class="form-label" for="tamanho">Tamanho</label><input class="form-control" id="tamanho" name="tamanho" maxlength="20" placeholder="Ex.: M, 38, único" /></div>
+        <div class="col-md-6"><label class="form-label" for="estado_conservacao">Estado da peça</label><input class="form-control" id="estado_conservacao" name="estado_conservacao" maxlength="60" placeholder="Ex.: Ótimo estado" /></div>
+        <div class="col-md-6"><label class="form-label" for="foto">Foto da peça</label><input class="form-control" id="foto" name="foto" type="file" accept="image/jpeg,image/png,image/webp,image/gif" /><div class="form-text">JPG, PNG, WEBP ou GIF de até 2 MB.</div></div>
+        <div class="col-md-6"><label class="form-label" for="imagem_url">Ou link da foto</label><input class="form-control" id="imagem_url" name="imagem_url" type="url" placeholder="https://… (opcional)" /><div class="form-text">Sem foto, o catálogo usa uma imagem ilustrativa.</div></div>
+        <div class="col-12"><label class="form-label" for="descricao">Descrição</label><textarea class="form-control" id="descricao" name="descricao" rows="2" maxlength="2000" placeholder="Conte um pouco sobre a peça, o caimento ou os detalhes…"></textarea></div>
+        <div class="col-12"><div class="form-check"><input class="form-check-input" type="checkbox" id="disponibilidade" name="disponibilidade" checked /><label class="form-check-label" for="disponibilidade">Peça disponível para venda</label></div></div>
+      </div>
+      <div class="mt-4 d-flex flex-wrap gap-2"><button class="btn btn-brand" type="submit">Salvar peça</button><button class="btn btn-outline-brand" type="reset">Limpar formulário</button></div>
+    </form>
+    <% } else { %>
+    <div class="editor-card">
+      <div class="editor-heading"><div><span class="eyebrow">PAINEL DO CATÁLOGO</span><h2>Anuncie sua peça</h2></div><p>Para anunciar, entre na sua conta ou faça seu cadastro. É rapidinho.</p></div>
+      <div class="d-flex flex-wrap gap-2"><a class="btn btn-brand" href="/login?voltar=%2Fproducts%23form-area">Entrar na minha conta</a><a class="btn btn-outline-brand" href="/cadastro?voltar=%2Fproducts%23form-area">Criar conta</a></div>
+    </div>
+    <% } %>
+  </div>
+  <div id="mensagem" aria-live="polite"></div>
+  <div class="catalog-results-heading"><div><span class="eyebrow">NOSSO ACERVO</span><h2>Encontre seu próximo favorito</h2></div><span id="resultado-contagem" class="result-count">Carregando peças…</span></div>
+  <div id="container-produtos" class="row g-4 product-grid"><div class="col-12"><p class="muted-note">Carregando o catálogo…</p></div></div>
+</section>
+<script src="/scripts/products.js"></script>
