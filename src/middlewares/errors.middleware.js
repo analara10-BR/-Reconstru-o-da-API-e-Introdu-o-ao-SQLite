@@ -20,6 +20,11 @@ export const errorHandler = (err, req, res, next) => {
     });
   }
 
+  // Corpo grande demais (ex.: foto acima do limite)
+  if (err.type === "entity.too.large") {
+    return res.status(413).json({ message: "Os dados enviados são grandes demais. Use uma foto de até 2 MB." });
+  }
+
   return res.status(500).json({
     message: "Erro interno do servidor!",
     error: err.message,

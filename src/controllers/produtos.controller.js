@@ -1,9 +1,38 @@
 import ProdutosModel from "../models/produtos.model.js";
+import FornecedoresModel from "../models/fornecedores.model.js";
 import { handleSqliteError } from "./sqlite.errors.js";
+import { salvarFoto } from "../utils/foto.js";
+
+// Se veio um arquivo de foto, salva em public/uploads e usa o caminho dele como imagem_url
+const prepararDados = (body) => {
+  const dados = { ...body };
+  if (dados.foto) dados.imagem_url = salvarFoto(dados.foto);
+  delete dados.foto;
+  return dados;
+};
 
 export default class ProdutosController {
   constructor() {
     this.model = new ProdutosModel();
+    this.fornecedores = new FornecedoresModel();
+  }
+
+  /*
+    Verifica se o produto existe e se pertence a quem está logado.
+    O dono do anúncio é o cliente ligado ao fornecedor do produto (fornecedor.id_cliente).
+    Retorna o produto ou já envia a resposta de erro (404/403).
+  */
+  buscarProdutoDoCliente(req, res) {
+    const produto = this.model.findById(Number(req.params.produtoId));
+    if (!produto) {
+      res.status(404).json({ message: "Produto não encontrado!" });
+      return null;
+    }
+    if (produto.id_cliente_anunciante !== req.cliente.id_cliente) {
+      res.status(403).json({ message: "Você só pode alterar as peças que você anunciou." });
+      return null;
+    }
+    return produto;
   }
 
   // GET /api/produtos  (opcional: ?q=termo)
@@ -37,11 +66,13 @@ export default class ProdutosController {
     }
   }
 
-  // POST /api/produtos
+  // POST /api/produtos (rota protegida: só chega aqui quem passou pelo middleware exigirLogin)
   async createProduto(req, res, next) {
     try {
-      const novoProduto = this.model.create(req.body);
-      return res.status(201).json({ message: "Novo produto cadastrado!", produto: novoProduto });
+      // Quem anuncia vira (ou já é) FORNECEDOR da peça -> relacionamento FORNECE do DER
+      const fornecedor = this.fornecedores.obterOuCriarParaCliente(req.cliente);
+      const novoProduto = this.model.create({ ...prepararDados(req.body), id_fornecedor: fornecedor.id_fornecedor });
+      return res.status(201).json({ message: "Peça anunciada com sucesso!", produto: novoProduto });
     } catch (error) {
       handleSqliteError(error, res, next);
     }
@@ -50,12 +81,8 @@ export default class ProdutosController {
   // PUT /api/produtos/:produtoId
   async updateProduto(req, res, next) {
     try {
-      const produto = this.model.replace(Number(req.params.produtoId), req.body);
-
-      if (!produto) {
-        return res.status(404).json({ message: "Produto não encontrado!" });
-      }
-
+      if (!this.buscarProdutoDoCliente(req, res)) return;
+      const produto = this.model.replace(Number(req.params.produtoId), prepararDados(req.body));
       return res.status(200).json({ message: "Produto atualizado!", produto });
     } catch (error) {
       handleSqliteError(error, res, next);
@@ -65,12 +92,8 @@ export default class ProdutosController {
   // PATCH /api/produtos/:produtoId
   async patchProduto(req, res, next) {
     try {
-      const produto = this.model.update(Number(req.params.produtoId), req.body);
-
-      if (!produto) {
-        return res.status(404).json({ message: "Produto não encontrado!" });
-      }
-
+      if (!this.buscarProdutoDoCliente(req, res)) return;
+      const produto = this.model.update(Number(req.params.produtoId), prepararDados(req.body));
       return res.status(200).json({ message: "Produto atualizado!", produto });
     } catch (error) {
       handleSqliteError(error, res, next);
@@ -80,42 +103,14 @@ export default class ProdutosController {
   // DELETE /api/produtos/:produtoId
   async deleteProduto(req, res, next) {
     try {
+      if (!this.buscarProdutoDoCliente(req, res)) return;
       const deletedProduto = this.model.remove(Number(req.params.produtoId));
-
-      if (!deletedProduto) {
-        return res.status(404).json({ message: "Produto não encontrado!" });
-      }
-
       return res.status(200).json({ message: "Produto deletado!", produto: deletedProduto });
     } catch (error) {
-      next(error);
-    }
-  }
-
-  // POST /api/produtos/:produtoId/categorias/:categoriaId  (vínculo N:N)
-  async addCategoria(req, res, next) {
-    try {
-      const produtoId = Number(req.params.produtoId);
-      if (!this.model.findById(produtoId)) {
-        return res.status(404).json({ message: "Produto não encontrado!" });
+      // Peça que já faz parte de um pedido (item_pedido) não pode ser apagada
+      if (String(error.code) === "SQLITE_CONSTRAINT_FOREIGNKEY") {
+        return res.status(409).json({ message: "Esta peça já faz parte de um pedido e não pode ser excluída. Marque-a como indisponível." });
       }
-      this.model.addCategoria(produtoId, Number(req.params.categoriaId));
-      return res.status(201).json({ message: "Categoria vinculada ao produto!", produto: this.model.findById(produtoId) });
-    } catch (error) {
-      handleSqliteError(error, res, next);
-    }
-  }
-
-  // DELETE /api/produtos/:produtoId/categorias/:categoriaId  (remove apenas o vínculo N:N)
-  async removeCategoria(req, res, next) {
-    try {
-      const produtoId = Number(req.params.produtoId);
-      const removidos = this.model.removeCategoria(produtoId, Number(req.params.categoriaId));
-      if (removidos === 0) {
-        return res.status(404).json({ message: "Vínculo entre produto e categoria não encontrado!" });
-      }
-      return res.status(200).json({ message: "Vínculo removido!", produto: this.model.findById(produtoId) });
-    } catch (error) {
       next(error);
     }
   }

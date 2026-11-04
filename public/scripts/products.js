@@ -26,11 +26,11 @@ function renderizarProdutos() {
   const precoMin = document.getElementById("preco-min")?.value;
   const precoMax = document.getElementById("preco-max")?.value;
   const lista = todosOsProdutos.filter((produto) => {
-    const correspondeTexto = [produto.nome, produto.marca, produto.descricao, produto.tamanho, produto.condicao, ...(produto.categorias ?? [])]
+    const correspondeTexto = [produto.nome, produto.fornecedor, produto.descricao, produto.tamanho, produto.estado_conservacao, produto.categoria]
       .some((texto) => String(texto ?? "").toLocaleLowerCase("pt-BR").includes(termo));
-    const correspondeCategoria = !categoria || (produto.categorias ?? []).includes(categoria);
+    const correspondeCategoria = !categoria || produto.categoria === categoria;
     const correspondeTamanho = !tamanho || String(produto.tamanho ?? "") === tamanho;
-    const correspondeCondicao = !condicao || String(produto.condicao ?? "") === condicao;
+    const correspondeCondicao = !condicao || String(produto.estado_conservacao ?? "") === condicao;
     const preco = Number(produto.preco);
     const correspondePrecoMin = precoMin === "" || precoMin === undefined || (Number.isFinite(preco) && preco >= Number(precoMin));
     const correspondePrecoMax = precoMax === "" || precoMax === undefined || (Number.isFinite(preco) && preco <= Number(precoMax));
@@ -40,7 +40,7 @@ function renderizarProdutos() {
 
   if (lista.length === 0) {
     const semProdutos = todosOsProdutos.length === 0;
-    container.innerHTML = `<div class="col-12"><div class="empty-state"><span>${semProdutos ? "✳" : "⌕"}</span><h3>${semProdutos ? "O garimpo está começando" : "Nenhuma peça encontrada"}</h3><p>${semProdutos ? "Ainda não há produtos cadastrados. Que tal adicionar a primeira peça?" : "Tente buscar por outro nome, marca ou categoria."}</p>${semProdutos ? '<button class="btn btn-brand" type="button" data-bs-toggle="collapse" data-bs-target="#form-area">Cadastrar primeira peça</button>' : '<button class="btn btn-outline-brand" type="button" id="limpar-busca">Limpar busca</button>'}</div></div>`;
+    container.innerHTML = `<div class="col-12"><div class="empty-state"><span>${semProdutos ? "✳" : "⌕"}</span><h3>${semProdutos ? "O garimpo está começando" : "Nenhuma peça encontrada"}</h3><p>${semProdutos ? "Ainda não há produtos cadastrados. Que tal adicionar a primeira peça?" : "Tente buscar por outro nome, categoria ou anunciante."}</p>${semProdutos ? '<button class="btn btn-brand" type="button" data-bs-toggle="collapse" data-bs-target="#form-area">Cadastrar primeira peça</button>' : '<button class="btn btn-outline-brand" type="button" id="limpar-busca">Limpar busca</button>'}</div></div>`;
     document.getElementById("limpar-busca")?.addEventListener("click", limparFiltros);
     return;
   }
@@ -50,9 +50,9 @@ function renderizarProdutos() {
       <article class="product-card">
         <div class="product-photo">${criarImagem(produto)}<span class="product-status ${produto.disponivel ? "" : "sold"}">${produto.disponivel ? "Disponível" : "Indisponível"}</span></div>
         <div class="product-card-body">
-          <div class="product-category">${escapeHtml((produto.categorias ?? []).join(" · ") || "Peça de garimpo")}</div>
+          <div class="product-category">${escapeHtml(produto.categoria || "Peça de garimpo")}</div>
           <h3>${escapeHtml(produto.nome)}</h3>
-          <div class="product-meta"><span>${escapeHtml(produto.marca || "Sem marca")}${produto.tamanho ? ` · Tam. ${escapeHtml(produto.tamanho)}` : ""}</span><strong class="product-price">${formatarPreco(produto.preco)}</strong></div>
+          <div class="product-meta"><span>${escapeHtml(produto.fornecedor || "Brechó Raiz")}${produto.tamanho ? ` · Tam. ${escapeHtml(produto.tamanho)}` : ""}</span><strong class="product-price">${formatarPreco(produto.preco)}</strong></div>
           <a class="card-link" href="/products/${Number(produto.id)}"><span>Ver detalhes da peça</span><span aria-hidden="true">↗</span></a>
         </div>
       </article>
@@ -68,9 +68,9 @@ function preencherFiltros() {
     select.innerHTML = `<option value="">${textoPadrao}</option>` + valores.map((valor) => `<option value="${escapeHtml(valor)}">${escapeHtml(valor)}</option>`).join("");
     if (valores.includes(atual)) select.value = atual;
   };
-  const categorias = [...new Set(todosOsProdutos.flatMap((p) => p.categorias ?? []).filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt-BR"));
+  const categorias = [...new Set(todosOsProdutos.map((p) => p.categoria).filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt-BR"));
   const tamanhos = [...new Set(todosOsProdutos.map((p) => p.tamanho).filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt-BR", { numeric: true }));
-  const condicoes = [...new Set(todosOsProdutos.map((p) => p.condicao).filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt-BR"));
+  const condicoes = [...new Set(todosOsProdutos.map((p) => p.estado_conservacao).filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt-BR"));
   preencher("filtro-categoria", categorias, "Todas");
   preencher("filtro-tamanho", tamanhos, "Todos");
   preencher("filtro-condicao", condicoes, "Todas");
@@ -89,10 +89,11 @@ async function cadastrarProduto(evento) {
   const botao = evento.submitter;
   if (botao) { botao.disabled = true; botao.textContent = "Salvando…"; }
   try {
-    const response = await fetch("/api/produtos", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(lerFormulario()) });
+    const response = await fetch("/api/produtos", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(await lerFormulario()) });
     const dados = await respostaJson(response);
     mostrarMensagem(`${dados.message} A peça “${dados.produto.nome}” já está no catálogo.`);
     evento.target.reset();
+    await carregarOpcoes();
     await carregarProdutos();
   } catch (error) { mostrarMensagem(error.message, "danger"); }
   finally { if (botao) { botao.disabled = false; botao.textContent = "Salvar peça"; } }
@@ -100,7 +101,7 @@ async function cadastrarProduto(evento) {
 
 window.addEventListener("DOMContentLoaded", () => {
   carregarProdutos();
-  carregarOpcoes().catch((error) => mostrarMensagem(error.message, "danger"));
+  if (document.getElementById("id_categoria")) carregarOpcoes().catch((error) => mostrarMensagem(error.message, "danger"));
   document.getElementById("form-produto")?.addEventListener("submit", cadastrarProduto);
   document.getElementById("form-busca")?.addEventListener("submit", (evento) => { evento.preventDefault(); renderizarProdutos(); });
   document.getElementById("busca")?.addEventListener("input", renderizarProdutos);

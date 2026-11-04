@@ -14,7 +14,15 @@
           <a class="nav-link" href="/products">Garimpar peças</a>
           <a class="nav-link" href="/about">Nossa história</a>
           <a class="nav-link" href="/contact">Contato</a>
-          <a class="btn btn-brand nav-cta" href="/products#form-area">Anunciar uma peça <span aria-hidden="true">↗</span></a>
+          <%# usuario vem do middleware carregarUsuario (res.locals). Sem login, o botão leva para a página de entrar. %>
+          <% if (typeof usuario !== "undefined" && usuario) { %>
+            <span class="nav-link">Olá, <%= usuario.nome.split(" ")[0] %></span>
+            <a class="nav-link" href="#" id="btn-sair" role="button">Sair</a>
+            <a class="btn btn-brand nav-cta" href="/products#form-area">Anunciar uma peça <span aria-hidden="true">↗</span></a>
+          <% } else { %>
+            <a class="nav-link" href="/login">Entrar</a>
+            <a class="btn btn-brand nav-cta" href="/login?voltar=%2Fproducts%23form-area">Anunciar uma peça <span aria-hidden="true">↗</span></a>
+          <% } %>
         </div>
       </div>
     </div>

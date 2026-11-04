@@ -1,5 +1,5 @@
 // comando: npm run db:select   (ou: node src/scripts/select.js)
-// Consultas (READ) usando os relacionamentos entre as tabelas
+// Consultas (READ) usando os relacionamentos do DER
 
 import { createDatabase } from "../db_config/database.js";
 
@@ -8,76 +8,88 @@ const db = createDatabase(process.env.DB_NAME || "info.db");
 // .all() → retorna todas as linhas | .get() → retorna apenas a primeira linha
 
 console.log("Todos os produtos:");
-console.table(db.prepare("SELECT * FROM produtos").all());
+console.table(db.prepare("SELECT id_produto, nome, preco, disponibilidade FROM produto").all());
 
-console.log("Produto com id = 1:");
-console.log(db.prepare("SELECT * FROM produtos WHERE id = ?").get(1));
+console.log("Produto com id = 1 (WHERE pela PK):");
+console.log(db.prepare("SELECT * FROM produto WHERE id_produto = ?").get(1));
 
-// 1:N → INNER JOIN entre produtos e marcas
-console.log("Produtos e suas marcas (1:N):");
+// CATEGORIA 1:N PRODUTO e FORNECEDOR 1:N PRODUTO → INNER JOIN pelas FKs
+console.log("Produtos com categoria e fornecedor:");
 console.table(
   db
     .prepare(
       `
-      SELECT produtos.nome, produtos.preco, marcas.nome AS marca
-      FROM produtos
-      LEFT JOIN marcas ON marcas.id = produtos.marca_id
-      ORDER BY produtos.preco
+      SELECT p.nome, p.preco, c.nome AS categoria, f.nome AS fornecedor
+      FROM produto p
+      INNER JOIN categoria c  ON c.id_categoria  = p.id_categoria
+      INNER JOIN fornecedor f ON f.id_fornecedor = p.id_fornecedor
+      ORDER BY p.preco
       `,
     )
     .all(),
 );
 
-// 1:1 → produtos e detalhes_produto
-console.log("Produtos e seus detalhes (1:1):");
+// PEDIDO N:N PRODUTO → passa pela tabela associativa item_pedido
+console.log("Itens de cada pedido (N:N através de item_pedido):");
 console.table(
   db
     .prepare(
       `
-      SELECT produtos.nome, detalhes_produto.tamanho, detalhes_produto.condicao
-      FROM produtos
-      INNER JOIN detalhes_produto ON detalhes_produto.produto_id = produtos.id
+      SELECT pe.id_pedido, cl.nome AS cliente, pr.nome AS produto, i.quantidade, i.preco_unitario,
+             pe.codigo_cupom
+      FROM pedido pe
+      INNER JOIN cliente cl    ON cl.id_cliente = pe.id_cliente
+      INNER JOIN item_pedido i ON i.id_pedido   = pe.id_pedido
+      INNER JOIN produto pr    ON pr.id_produto = i.id_produto
+      ORDER BY pe.id_pedido
       `,
     )
     .all(),
 );
 
-// N:N → produtos, produtos_categorias e categorias
-console.log("Produtos e suas categorias (N:N):");
+// LEFT JOIN: mostra também pedidos SEM entrega e SEM pagamento (aparecem como NULL)
+console.log("Pedidos com pagamento e entrega (LEFT JOIN):");
 console.table(
   db
     .prepare(
       `
-      SELECT produtos.nome, GROUP_CONCAT(categorias.nome, ', ') AS categorias
-      FROM produtos
-      INNER JOIN produtos_categorias ON produtos_categorias.produto_id = produtos.id
-      INNER JOIN categorias ON categorias.id = produtos_categorias.categoria_id
-      GROUP BY produtos.id
+      SELECT pe.id_pedido, pe.status, pg.forma_pagamento, pg.valor_pago, e.situacao AS entrega
+      FROM pedido pe
+      LEFT JOIN pagamento pg ON pg.id_pedido = pe.id_pedido
+      LEFT JOIN entrega e    ON e.id_pedido  = pe.id_pedido
       `,
     )
     .all(),
 );
 
-// Agregação: quantidade de produtos por marca
-console.log("Quantidade de produtos por marca:");
+// Agregação: quantidade de produtos por categoria
+console.log("Quantidade de produtos por categoria:");
 console.table(
   db
     .prepare(
       `
-      SELECT marcas.nome, COUNT(produtos.id) AS total
-      FROM marcas
-      LEFT JOIN produtos ON produtos.marca_id = marcas.id
-      GROUP BY marcas.id
+      SELECT c.nome, COUNT(p.id_produto) AS total
+      FROM categoria c
+      LEFT JOIN produto p ON p.id_categoria = c.id_categoria
+      GROUP BY c.id_categoria
       ORDER BY total DESC
       `,
     )
     .all(),
 );
 
-console.log("Usuários (ultimo_login convertido de Unix Timestamp):");
+// Nunca selecione senha_hash em telas ou relatórios
+console.log("Clientes e quantidade de endereços (CLIENTE 1:N ENDERECO):");
 console.table(
   db
-    .prepare("SELECT nome, email, datetime(ultimo_login, 'unixepoch') AS ultimo_login FROM usuarios")
+    .prepare(
+      `
+      SELECT cl.nome, cl.email, COUNT(en.id_endereco) AS enderecos
+      FROM cliente cl
+      LEFT JOIN endereco en ON en.id_cliente = cl.id_cliente
+      GROUP BY cl.id_cliente
+      `,
+    )
     .all(),
 );
 

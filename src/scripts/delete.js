@@ -5,66 +5,34 @@ import { createDatabase } from "../db_config/database.js";
 
 const db = createDatabase(process.env.DB_NAME || "info.db");
 
-// Deletar um produto pelo ID
+// Deletar um produto pelo ID (WHERE pela PK). O produto 4 não está em nenhum pedido.
 db.prepare(
   `
-  DELETE FROM produtos
-  WHERE id = ?
+  DELETE FROM produto
+  WHERE id_produto = ?
 `,
-).run(5);
+).run(4);
 
-// Deletar produtos indisponíveis
-db.prepare(
-  `
-  DELETE FROM produtos
-  WHERE disponibilidade = 0
-`,
-).run();
+// DELETE bloqueado pela FOREIGN KEY:
+// o produto 3 está em item_pedido, então o SQLite não deixa apagar (preserva o histórico da venda)
+try {
+  db.prepare("DELETE FROM produto WHERE id_produto = ?").run(3);
+} catch (error) {
+  console.log(`FOREIGN KEY bloqueou o DELETE do produto 3: ${error.message}`);
+}
 
-// DELETE com relacionamento (N:N)
-// Remover relação produto ↔ categoria
-// Remove apenas o vínculo
-// Não apaga produto nem categoria
-db.prepare(
-  `
-  DELETE FROM produtos_categorias
-  WHERE produto_id = ? AND categoria_id = ?
-`,
-).run(1, 2);
+// DELETE com ON DELETE CASCADE:
+// ao apagar o pedido 1, os itens, pagamentos e a entrega dele são apagados junto
+db.prepare("DELETE FROM pedido WHERE id_pedido = ?").run(1);
 
-// DELETE respeitando integridade referencial
-// Deletar um produto + suas relações (forma segura)
-// 1) remove relacionamentos N:N
-// Ordem importa
-// Foreign keys impedem erros
-db.prepare(
-  `
-  DELETE FROM produtos_categorias
-  WHERE produto_id = ?
-`,
-).run(3);
+// Agora o produto 3 não está mais em nenhum pedido e pode ser apagado
+db.prepare("DELETE FROM produto WHERE id_produto = ?").run(3);
 
-// 2) remove detalhes (1:1)
-db.prepare(
-  `
-  DELETE FROM detalhes_produto
-  WHERE produto_id = ?
-`,
-).run(3);
-
-// 3) remove o produto
-db.prepare(
-  `
-  DELETE FROM produtos
-  WHERE id = ?
-`,
-).run(3);
-
-console.log("produtos");
-console.table(db.prepare("SELECT * FROM produtos").all());
-console.log("detalhes_produto");
-console.table(db.prepare("SELECT * FROM detalhes_produto").all());
-console.log("produtos_categorias");
-console.table(db.prepare("SELECT * FROM produtos_categorias").all());
+console.log("produto");
+console.table(db.prepare("SELECT id_produto, nome FROM produto").all());
+console.log("item_pedido");
+console.table(db.prepare("SELECT * FROM item_pedido").all());
+console.log("entrega");
+console.table(db.prepare("SELECT * FROM entrega").all());
 
 db.close();

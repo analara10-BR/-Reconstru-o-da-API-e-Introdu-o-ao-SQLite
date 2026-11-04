@@ -1,0 +1,192 @@
+# Via Extensão VS Code REST Client (Huachao Mao)
+# Antes de testar: npm run db:populate  e  npm run dev
+
+### Configurações Globais
+@baseUrl = http://localhost:3000
+@contentType = application/json
+
+# ===================== Lecture001 =====================
+
+### Endpoint "/"
+GET {{baseUrl}}/
+
+### Endpoint "/equipe"
+GET {{baseUrl}}/equipe
+
+# ===================== Board ApiN2V1 =====================
+
+### Verifica o status do servidor
+GET {{baseUrl}}/api/info
+Accept: {{contentType}}
+
+### Testa o Middleware (id correto = 42)
+GET {{baseUrl}}/api/info/42
+Accept: {{contentType}}
+
+### Testa o Middleware (id inválido -> 400)
+GET {{baseUrl}}/api/info/ABC
+Accept: {{contentType}}
+
+### Testa o Middleware (resposta incorreta -> 500 pelo errorHandler)
+GET {{baseUrl}}/api/info/7
+Accept: {{contentType}}
+
+### Rota inexistente -> 404 (notFound)
+GET {{baseUrl}}/api/rota-que-nao-existe
+Accept: {{contentType}}
+
+# ===================== Atividade N2 =====================
+
+### Dados da página home
+GET {{baseUrl}}/api/home
+
+### Lista de produtos (produtos do banco)
+GET {{baseUrl}}/api/products
+
+### Produto por id
+GET {{baseUrl}}/api/products/1
+
+### Produto inexistente -> 404
+GET {{baseUrl}}/api/products/999
+
+# ===================== Autenticação =====================
+# O REST Client guarda o cookie de sessão automaticamente depois do login.
+
+### Cadastro de cliente (já fica logado)
+POST {{baseUrl}}/api/auth/cadastro
+Content-Type: {{contentType}}
+
+{
+    "nome": "Maria Souza",
+    "email": "maria@email.com",
+    "telefone": "(85) 98888-7777",
+    "senha": "segredo123",
+    "confirmar_senha": "segredo123"
+}
+
+### Cadastro com e-mail repetido -> 409
+POST {{baseUrl}}/api/auth/cadastro
+Content-Type: {{contentType}}
+
+{
+    "nome": "Outro José",
+    "email": "ze@email.com",
+    "telefone": "(85) 90000-0000",
+    "senha": "123456"
+}
+
+### Login inválido -> 401
+POST {{baseUrl}}/api/auth/login
+Content-Type: {{contentType}}
+
+{
+    "email": "ze@email.com",
+    "senha": "errada"
+}
+
+### Login (clientes de exemplo: ze@email.com / joao@email.com, senha brecho123)
+POST {{baseUrl}}/api/auth/login
+Content-Type: {{contentType}}
+
+{
+    "email": "ze@email.com",
+    "senha": "brecho123"
+}
+
+### Quem está logado
+GET {{baseUrl}}/api/auth/me
+
+# ===================== Produtos (DER) =====================
+
+### GET - Todos os produtos (com categoria e fornecedor)
+GET {{baseUrl}}/api/produtos
+
+### GET - Busca por nome, descrição, categoria ou anunciante
+GET {{baseUrl}}/api/produtos?q=vintage
+
+### GET - Produto por id
+GET {{baseUrl}}/api/produtos/1
+
+### GET - Produto inexistente -> 404
+GET {{baseUrl}}/api/produtos/999
+
+### POST - Anunciar peça (precisa estar logado; sem login -> 401)
+POST {{baseUrl}}/api/produtos
+Content-Type: {{contentType}}
+
+{
+    "nome": "Jaqueta Jeans Oversized",
+    "descricao": "Jaqueta jeans clara, modelagem ampla.",
+    "tamanho": "GG",
+    "preco": 120.0,
+    "estado_conservacao": "Seminovo",
+    "disponibilidade": true,
+    "id_categoria": 2,
+    "imagem_url": "https://images.unsplash.com/photo-1551537482-f2075a1d41f2?w=900"
+}
+
+### POST - Dados inválidos -> 400
+POST {{baseUrl}}/api/produtos
+Content-Type: {{contentType}}
+
+{
+    "preco": "mil novecentos"
+}
+
+### POST - Categoria inexistente (FOREIGN KEY) -> 400
+POST {{baseUrl}}/api/produtos
+Content-Type: {{contentType}}
+
+{
+    "nome": "Produto com categoria inválida",
+    "preco": 10,
+    "id_categoria": 999
+}
+
+### PATCH - Atualização PARCIAL (só o dono do anúncio; o produto 4 é do José)
+PATCH {{baseUrl}}/api/produtos/4
+Content-Type: {{contentType}}
+
+{
+    "preco": 139.9
+}
+
+### PATCH - Peça de outra pessoa (acervo da loja) -> 403
+PATCH {{baseUrl}}/api/produtos/1
+Content-Type: {{contentType}}
+
+{
+    "preco": 1
+}
+
+### DELETE - Peça que está em um pedido -> 409 (o produto 5 está no pedido 2)
+DELETE {{baseUrl}}/api/produtos/5
+
+# ===================== Categorias e fornecedores =====================
+
+### Listar categorias
+GET {{baseUrl}}/api/categorias
+
+### Categoria e seus produtos
+GET {{baseUrl}}/api/categorias/2
+
+### Cadastrar categoria (logado)
+POST {{baseUrl}}/api/categorias
+Content-Type: {{contentType}}
+
+{
+    "nome": "Acessórios",
+    "descricao": "Bolsas, cintos e bijuterias"
+}
+
+### Deletar categoria com produtos -> 409 (FOREIGN KEY)
+DELETE {{baseUrl}}/api/categorias/1
+
+### Listar fornecedores
+GET {{baseUrl}}/api/fornecedores
+
+### Fornecedor e suas peças
+GET {{baseUrl}}/api/fornecedores/2
+
+### Logout
+POST {{baseUrl}}/api/auth/logout

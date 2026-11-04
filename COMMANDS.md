@@ -1,17 +1,18 @@
 # Comandos do projeto
 
 ```bash
-npm install            # instala as dependências (express, better-sqlite3, cors, dotenv, ejs, express-ejs-layouts, nodemon)
-npm run db:populate    # cria/recria os dados de exemplo no SQLite (src/databases/info.db)
+npm install            # instala as dependências (express, express-session, better-sqlite3, cors, dotenv, ejs, express-ejs-layouts, nodemon)
+cp .env.example .env   # configura PORT, DB_NAME e SESSION_SECRET
+npm run db:populate    # recria os dados de exemplo das tabelas do DER (src/databases/info.db); senha dos clientes: brecho123
 npm run dev            # inicia o servidor com nodemon (reinicia ao salvar arquivos)
 npm start              # inicia o servidor com node
-npm test               # executa os testes automáticos da API (usa um banco separado: test.db)
+npm test               # executa os testes (tests/api.test.js e tests/migracao.test.js, com bancos separados)
 ```
 
 Scripts de prática de SQL (rodar depois do `db:populate`):
 
 ```bash
-npm run db:select      # consultas SELECT com JOIN (1:N, 1:1, N:N)
+npm run db:select      # consultas SELECT com JOIN (1:N, N:N via item_pedido, LEFT JOIN)
 npm run db:update      # comandos UPDATE do material
 npm run db:delete      # comandos DELETE do material (depois rode db:populate para restaurar)
 ```

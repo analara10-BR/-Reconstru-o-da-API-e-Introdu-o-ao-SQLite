@@ -1,0 +1,6 @@
+node_modules/
+.env
+# Bancos SQLite locais, backups da migração e fotos enviadas pelos usuários
+src/databases/
+public/uploads/*
+!public/uploads/.gitkeep

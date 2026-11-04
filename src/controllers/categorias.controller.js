@@ -1,6 +1,6 @@
 import CategoriasModel from "../models/categorias.model.js";
 
-const nomeValido = (nome) => typeof nome === "string" && nome.trim() !== "";
+const nomeValido = (nome) => typeof nome === "string" && nome.trim() !== "" && nome.length <= 60;
 
 export default class CategoriasController {
   constructor() {
@@ -28,7 +28,7 @@ export default class CategoriasController {
   async createCategoria(req, res, next) {
     try {
       if (!nomeValido(req.body?.nome)) return res.status(400).json({ message: "O campo 'nome' é obrigatório." });
-      res.status(201).json({ message: "Categoria cadastrada!", categoria: this.model.create(req.body.nome) });
+      res.status(201).json({ message: "Categoria cadastrada!", categoria: this.model.create(req.body) });
     } catch (error) {
       next(error);
     }
@@ -37,7 +37,7 @@ export default class CategoriasController {
   async updateCategoria(req, res, next) {
     try {
       if (!nomeValido(req.body?.nome)) return res.status(400).json({ message: "O campo 'nome' é obrigatório." });
-      const categoria = this.model.update(Number(req.params.id), req.body.nome);
+      const categoria = this.model.update(Number(req.params.id), req.body);
       if (!categoria) return res.status(404).json({ message: "Categoria não encontrada!" });
       res.status(200).json({ message: "Categoria atualizada!", categoria });
     } catch (error) {
@@ -51,6 +51,10 @@ export default class CategoriasController {
       if (!categoria) return res.status(404).json({ message: "Categoria não encontrada!" });
       res.status(200).json({ message: "Categoria deletada!", categoria });
     } catch (error) {
+      // A FK de produto.id_categoria impede apagar uma categoria que ainda tem peças
+      if (String(error.code) === "SQLITE_CONSTRAINT_FOREIGNKEY") {
+        return res.status(409).json({ message: "Esta categoria ainda possui produtos e não pode ser excluída." });
+      }
       next(error);
     }
   }

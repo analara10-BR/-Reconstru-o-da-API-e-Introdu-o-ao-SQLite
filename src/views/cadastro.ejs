@@ -1,0 +1,21 @@
+<section class="container detail-page">
+  <a class="back-link" href="/products">← Voltar ao garimpo</a>
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+      <div id="mensagem" aria-live="polite"></div>
+      <%# O formulário é enviado por fetch (public/scripts/auth.js) para POST /api/auth/cadastro %>
+      <form id="form-cadastro" class="editor-card" data-voltar="<%= voltar %>" novalidate>
+        <div class="editor-heading"><div><span class="eyebrow">SUA CONTA</span><h2>Criar conta</h2></div><p>Com uma conta você pode anunciar suas peças no brechó.</p></div>
+        <div class="row g-3">
+          <div class="col-12"><label class="form-label" for="nome">Nome *</label><input class="form-control" id="nome" name="nome" autocomplete="name" required maxlength="100" /></div>
+          <div class="col-md-6"><label class="form-label" for="email">E-mail *</label><input class="form-control" id="email" name="email" type="email" autocomplete="email" required placeholder="voce@email.com" /></div>
+          <div class="col-md-6"><label class="form-label" for="telefone">Telefone *</label><input class="form-control" id="telefone" name="telefone" type="tel" autocomplete="tel" required placeholder="(85) 99999-0000" /></div>
+          <div class="col-md-6"><label class="form-label" for="senha">Senha *</label><input class="form-control" id="senha" name="senha" type="password" autocomplete="new-password" required minlength="6" /><div class="form-text">Mínimo de 6 caracteres.</div></div>
+          <div class="col-md-6"><label class="form-label" for="confirmar_senha">Confirmar senha *</label><input class="form-control" id="confirmar_senha" name="confirmar_senha" type="password" autocomplete="new-password" required /></div>
+        </div>
+        <div class="mt-4 d-flex flex-wrap align-items-center gap-3"><button class="btn btn-brand" type="submit">Criar conta</button><a class="text-link" href="/login?voltar=<%= encodeURIComponent(voltar) %>">Já tenho conta <span aria-hidden="true">→</span></a></div>
+      </form>
+    </div>
+  </div>
+</section>
+<script src="/scripts/auth.js"></script>

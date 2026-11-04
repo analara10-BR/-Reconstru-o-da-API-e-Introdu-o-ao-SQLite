@@ -1,18 +1,20 @@
 import ProdutosModel from "../models/produtos.model.js";
 
-// Os "produtos" da loja/brecho são os produtos cadastrados no banco SQLite
-const toProduct = (produto) => ({
-  id: produto.id,
+// Formato usado pelas páginas do catálogo (cards, filtros e detalhes).
+// pode_editar = true somente para quem anunciou a peça (usado para mostrar o formulário de edição).
+const toProduct = (produto, cliente) => ({
+  id: produto.id_produto,
   nome: produto.nome,
-  disponivel: produto.disponivel,
-  preco: produto.preco,
-  estoque: produto.estoque,
-  marca: produto.marca,
-  imagem_url: produto.imagem_url,
   descricao: produto.descricao,
   tamanho: produto.tamanho,
-  condicao: produto.condicao,
-  categorias: produto.categorias,
+  preco: produto.preco,
+  estado_conservacao: produto.estado_conservacao,
+  disponivel: produto.disponibilidade,
+  imagem_url: produto.imagem_url,
+  id_categoria: produto.id_categoria,
+  categoria: produto.categoria,
+  fornecedor: produto.fornecedor,
+  pode_editar: Boolean(cliente) && produto.id_cliente_anunciante === cliente.id_cliente,
 });
 
 export default class ProductsController {
@@ -22,7 +24,7 @@ export default class ProductsController {
 
   async getProducts(req, res, next) {
     try {
-      const products = this.model.findAll().map(toProduct);
+      const products = this.model.findAll().map((p) => toProduct(p, req.cliente));
       res.json({ productsList: products });
     } catch (error) {
       next(error);
@@ -38,7 +40,7 @@ export default class ProductsController {
         return res.status(404).json({ message: "Produto não encontrado" });
       }
 
-      res.json(toProduct(produto));
+      res.json(toProduct(produto, req.cliente));
     } catch (error) {
       next(error);
     }

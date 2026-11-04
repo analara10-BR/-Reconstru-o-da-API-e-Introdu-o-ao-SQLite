@@ -14,42 +14,42 @@ function mostrarMensagem(texto, tipo = "success") {
   alvo.innerHTML = `<div class="alert alert-${escapeHtml(tipo)}" role="status">${escapeHtml(texto)}</div>`;
 }
 
-async function carregarOpcoes(marcaSelecionado = null, categoriasSelecionadas = []) {
-  const [marcasResponse, categoriasResponse] = await Promise.all([
-    fetch("/api/marcas"), fetch("/api/categorias"),
-  ]);
-  if (!marcasResponse.ok || !categoriasResponse.ok) throw new Error("Não foi possível carregar marcas e categorias.");
-  const [marcas, categorias] = await Promise.all([marcasResponse.json(), categoriasResponse.json()]);
-
-  const select = document.getElementById("marca_id");
+// Preenche o <select> de categoria (no DER cada produto tem UMA categoria)
+async function carregarOpcoes(categoriaSelecionada = null) {
+  const response = await fetch("/api/categorias");
+  if (!response.ok) throw new Error("Não foi possível carregar as categorias.");
+  const categorias = await response.json();
+  const select = document.getElementById("id_categoria");
   if (select) {
-    select.innerHTML = '<option value="">Sem marca</option>' + marcas.map((marca) =>
-      `<option value="${Number(marca.id)}" ${Number(marca.id) === Number(marcaSelecionado) ? "selected" : ""}>${escapeHtml(marca.nome)}</option>`
+    select.innerHTML = '<option value="">Escolha…</option>' + categorias.map((categoria) =>
+      `<option value="${Number(categoria.id_categoria)}" ${Number(categoria.id_categoria) === Number(categoriaSelecionada) ? "selected" : ""}>${escapeHtml(categoria.nome)}</option>`
     ).join("");
-  }
-
-  const checks = document.getElementById("categorias-checks");
-  if (checks) {
-    checks.innerHTML = categorias.map((categoria) => `
-      <div class="form-check">
-        <input class="form-check-input" type="checkbox" value="${Number(categoria.id)}" id="cat-${Number(categoria.id)}"
-          ${categoriasSelecionadas.map(Number).includes(Number(categoria.id)) ? "checked" : ""} />
-        <label class="form-check-label" for="cat-${Number(categoria.id)}">${escapeHtml(categoria.nome)}</label>
-      </div>`).join("");
   }
 }
 
-function lerFormulario() {
+// Lê a foto escolhida no <input type="file"> e converte para texto (data URL base64) para enviar no JSON
+function lerArquivoComoDataUrl(arquivo) {
+  return new Promise((resolve, reject) => {
+    const leitor = new FileReader();
+    leitor.onload = () => resolve(leitor.result);
+    leitor.onerror = () => reject(new Error("Não foi possível ler a foto escolhida."));
+    leitor.readAsDataURL(arquivo);
+  });
+}
+
+async function lerFormulario() {
   const valor = (id) => document.getElementById(id)?.value.trim() ?? "";
   const numeroOuNull = (id) => (valor(id) === "" ? null : Number(valor(id)));
-  return {
-    nome: valor("nome"), preco: numeroOuNull("preco"), estoque: numeroOuNull("estoque") ?? 1,
-    disponivel: document.getElementById("disponivel")?.checked ?? true,
-    marca_id: numeroOuNull("marca_id"), tamanho: valor("tamanho") || null,
-    condicao: valor("condicao") || null, imagem_url: valor("imagem_url") || null,
-    descricao: valor("descricao") || null,
-    categoria_ids: [...document.querySelectorAll("#categorias-checks input:checked")].map((el) => Number(el.value)),
+  const arquivo = document.getElementById("foto")?.files?.[0];
+  if (arquivo && arquivo.size > 2 * 1024 * 1024) throw new Error("A foto deve ter no máximo 2 MB.");
+  const dados = {
+    nome: valor("nome"), preco: numeroOuNull("preco"), id_categoria: numeroOuNull("id_categoria"),
+    disponibilidade: document.getElementById("disponibilidade")?.checked ?? true,
+    tamanho: valor("tamanho") || null, estado_conservacao: valor("estado_conservacao") || null,
+    imagem_url: valor("imagem_url") || null, descricao: valor("descricao") || null,
   };
+  if (arquivo) dados.foto = await lerArquivoComoDataUrl(arquivo);
+  return dados;
 }
 
 async function respostaJson(response) {
@@ -74,7 +74,7 @@ const fotosPorTipo = {
 };
 function imagemDoProduto(produto) {
   if (produto.imagem_url) return produto.imagem_url;
-  const texto = `${produto.nome ?? ""} ${(produto.categorias ?? []).join(" ")}`.toLowerCase();
+  const texto = `${produto.nome ?? ""} ${produto.categoria ?? ""}`.toLowerCase();
   if (texto.includes("vestido")) return fotosPorTipo.vestido;
   if (texto.includes("blazer")) return fotosPorTipo.blazer;
   if (texto.includes("calça") || texto.includes("calca")) return fotosPorTipo.calca;

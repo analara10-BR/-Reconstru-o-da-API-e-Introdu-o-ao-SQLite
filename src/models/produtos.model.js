@@ -1,164 +1,104 @@
 import db from "../db_config/connection.js";
 
-// Consulta base: junta produtos + marcas (1:N) + detalhes_produto (1:1) + categorias (N:N)
+// Consulta base usada em quase todas as leituras de produto.
+// JOIN = junta linhas de tabelas diferentes usando as chaves estrangeiras:
+// - produto.id_categoria  = categoria.id_categoria   (CATEGORIA 1:N PRODUTO)
+// - produto.id_fornecedor = fornecedor.id_fornecedor (FORNECEDOR 1:N PRODUTO)
+// INNER JOIN porque, pelo DER, todo produto TEM uma categoria e um fornecedor.
 const SELECT_PRODUTOS = `
-  SELECT l.id, l.nome, l.preco, l.disponibilidade, l.estoque, l.marca_id, l.imagem_url, l.descricao,
-         a.nome AS marca, d.tamanho, d.condicao,
-         GROUP_CONCAT(c.id) AS categoria_ids,
-         GROUP_CONCAT(c.nome, '|') AS categorias
-  FROM produtos l
-  LEFT JOIN marcas a ON a.id = l.marca_id
-  LEFT JOIN detalhes_produto d ON d.produto_id = l.id
-  LEFT JOIN produtos_categorias lc ON lc.produto_id = l.id
-  LEFT JOIN categorias c ON c.id = lc.categoria_id
+  SELECT p.id_produto, p.nome, p.descricao, p.tamanho, p.preco, p.estado_conservacao,
+         p.disponibilidade, p.imagem_url, p.id_categoria, p.id_fornecedor,
+         c.nome AS categoria, f.nome AS fornecedor, f.id_cliente AS id_cliente_anunciante
+  FROM produto p
+  INNER JOIN categoria c  ON c.id_categoria  = p.id_categoria
+  INNER JOIN fornecedor f ON f.id_fornecedor = p.id_fornecedor
 `;
 
 // Converte a linha do banco para o formato JSON da API
+// (disponibilidade é 0/1 no SQLite, mas na API vira true/false)
 const toProduto = (row) => {
   if (!row) return null;
-  return {
-    id: row.id,
-    nome: row.nome,
-    preco: row.preco,
-    disponivel: row.disponibilidade === 1,
-    estoque: row.estoque,
-    marca_id: row.marca_id,
-    imagem_url: row.imagem_url,
-    descricao: row.descricao,
-    marca: row.marca,
-    tamanho: row.tamanho,
-    condicao: row.condicao,
-    categoria_ids: row.categoria_ids ? row.categoria_ids.split(",").map(Number) : [],
-    categorias: row.categorias ? row.categorias.split("|") : [],
-  };
-};
-
-const salvarDetalhes = (produtoId, tamanho, condicao) => {
-  db.prepare(
-    `
-    INSERT INTO detalhes_produto (produto_id, tamanho, condicao)
-    VALUES (?, ?, ?)
-    ON CONFLICT(produto_id) DO UPDATE SET tamanho = excluded.tamanho, condicao = excluded.condicao
-    `,
-  ).run(produtoId, tamanho ?? null, condicao ?? null);
-};
-
-const salvarCategorias = (produtoId, categoriaIds) => {
-  db.prepare("DELETE FROM produtos_categorias WHERE produto_id = ?").run(produtoId);
-  const insert = db.prepare("INSERT INTO produtos_categorias (produto_id, categoria_id) VALUES (?, ?)");
-  for (const categoriaId of new Set(categoriaIds)) insert.run(produtoId, categoriaId);
+  return { ...row, disponibilidade: row.disponibilidade === 1 };
 };
 
 export default class ProdutosModel {
-  // READ - todos (com filtro opcional por nome, marca ou categoria)
+  // SELECT com WHERE opcional: busca pelo nome, descrição, categoria ou anunciante
+  // LIKE '%termo%' encontra o termo em qualquer parte do texto
   findAll(busca = "") {
     const termo = `%${busca}%`;
-    const rows = db
+    return db
       .prepare(
         `${SELECT_PRODUTOS}
-         WHERE (? = '' OR l.nome LIKE ? OR a.nome LIKE ? OR c.nome LIKE ?)
-         GROUP BY l.id
-         ORDER BY l.id`,
+         WHERE (? = '' OR p.nome LIKE ? OR p.descricao LIKE ? OR c.nome LIKE ? OR f.nome LIKE ?)
+         ORDER BY p.id_produto`,
       )
-      .all(busca, termo, termo, termo);
-    return rows.map(toProduto);
+      .all(busca, termo, termo, termo, termo)
+      .map(toProduto);
   }
 
-  // READ - um pelo id
+  // SELECT de um produto pela PK. O "?" é um parâmetro: o valor é enviado separado do SQL,
+  // o que evita SQL Injection.
   findById(id) {
-    const row = db.prepare(`${SELECT_PRODUTOS} WHERE l.id = ? GROUP BY l.id`).get(id);
-    return toProduto(row);
+    return toProduto(db.prepare(`${SELECT_PRODUTOS} WHERE p.id_produto = ?`).get(id));
   }
 
-  // CREATE - insere produto, detalhes (1:1) e categorias (N:N) numa única transação
-  create({ nome, preco = null, disponivel = true, estoque = 1, marca_id = null, categoria_ids = [], tamanho, condicao, imagem_url = null, descricao = null }) {
-    const criar = db.transaction(() => {
-      const result = db
-        .prepare(
-          `
-          INSERT INTO produtos (nome, disponibilidade, preco, estoque, marca_id, imagem_url, descricao)
-          VALUES (?, ?, ?, ?, ?, ?, ?)
-          `,
-        )
-        .run(nome.trim(), disponivel ? 1 : 0, preco, estoque ?? 1, marca_id, imagem_url || null, descricao || null);
-      const id = Number(result.lastInsertRowid);
-      if (tamanho !== undefined || condicao !== undefined) salvarDetalhes(id, tamanho, condicao);
-      salvarCategorias(id, categoria_ids);
-      return id;
-    });
-    return this.findById(criar());
+  // INSERT: cria um produto novo. Se id_categoria ou id_fornecedor não existirem,
+  // a FOREIGN KEY faz o SQLite recusar o INSERT (o controller transforma isso em erro 400).
+  create({ nome, descricao = null, tamanho = null, preco = null, estado_conservacao = null, disponibilidade = true, imagem_url = null, id_categoria, id_fornecedor }) {
+    const result = db
+      .prepare(
+        `
+        INSERT INTO produto (nome, descricao, tamanho, preco, estado_conservacao, disponibilidade, imagem_url, id_categoria, id_fornecedor)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `,
+      )
+      .run(nome.trim(), descricao || null, tamanho || null, preco, estado_conservacao || null, disponibilidade ? 1 : 0, imagem_url || null, id_categoria, id_fornecedor);
+    return this.findById(Number(result.lastInsertRowid));
   }
 
-  // UPDATE (PUT) - substitui o produto completo
-  replace(id, { nome, preco = null, disponivel = true, estoque = 1, marca_id = null, categoria_ids, tamanho, condicao, imagem_url = null, descricao = null }) {
-    const substituir = db.transaction(() => {
-      const result = db
-        .prepare(
-          `
-          UPDATE produtos
-          SET nome = ?, disponibilidade = ?, preco = ?, estoque = ?, marca_id = ?, imagem_url = ?, descricao = ?
-          WHERE id = ?
-          `,
-        )
-        .run(nome.trim(), disponivel ? 1 : 0, preco, estoque ?? 1, marca_id, imagem_url || null, descricao || null, id);
-      if (result.changes === 0) return false;
-      if (tamanho !== undefined || condicao !== undefined) salvarDetalhes(id, tamanho, condicao);
-      if (categoria_ids !== undefined) salvarCategorias(id, categoria_ids);
-      return true;
-    });
-    return substituir() ? this.findById(id) : null;
+  // UPDATE (PUT): substitui todos os campos editáveis. O fornecedor (dono do anúncio) não muda.
+  // WHERE id_produto = ? garante que só UMA linha seja alterada.
+  replace(id, { nome, descricao = null, tamanho = null, preco = null, estado_conservacao = null, disponibilidade = true, imagem_url = null, id_categoria }) {
+    const result = db
+      .prepare(
+        `
+        UPDATE produto
+        SET nome = ?, descricao = ?, tamanho = ?, preco = ?, estado_conservacao = ?,
+            disponibilidade = ?, imagem_url = ?, id_categoria = ?
+        WHERE id_produto = ?
+        `,
+      )
+      .run(nome.trim(), descricao || null, tamanho || null, preco, estado_conservacao || null, disponibilidade ? 1 : 0, imagem_url || null, id_categoria, id);
+    return result.changes ? this.findById(id) : null;
   }
 
-  // UPDATE (PATCH) - altera apenas os campos enviados
+  // UPDATE (PATCH): altera só os campos que vieram na requisição
   update(id, dados) {
-    const atual = this.findById(id);
-    if (!atual) return null;
-
-    const colunas = { nome: "nome", preco: "preco", disponivel: "disponibilidade", estoque: "estoque", marca_id: "marca_id", imagem_url: "imagem_url", descricao: "descricao" };
-    const campos = Object.keys(colunas).filter((campo) => dados[campo] !== undefined);
-
-    const atualizar = db.transaction(() => {
-      if (campos.length > 0) {
-        const set = campos.map((campo) => `${colunas[campo]} = ?`).join(", ");
-        const valores = campos.map((campo) => {
-          if (campo === "disponivel") return dados.disponivel ? 1 : 0;
-          if (campo === "nome") return dados.nome.trim();
-          return dados[campo];
-        });
-        db.prepare(`UPDATE produtos SET ${set} WHERE id = ?`).run(...valores, id);
-      }
-      if (dados.tamanho !== undefined || dados.condicao !== undefined) {
-        salvarDetalhes(id, dados.tamanho ?? atual.tamanho, dados.condicao ?? atual.condicao);
-      }
-      if (dados.categoria_ids !== undefined) salvarCategorias(id, dados.categoria_ids);
-    });
-    atualizar();
+    if (!this.findById(id)) return null;
+    const colunas = ["nome", "descricao", "tamanho", "preco", "estado_conservacao", "disponibilidade", "imagem_url", "id_categoria"];
+    const campos = colunas.filter((campo) => dados[campo] !== undefined);
+    if (campos.length > 0) {
+      const set = campos.map((campo) => `${campo} = ?`).join(", ");
+      const valores = campos.map((campo) => {
+        if (campo === "disponibilidade") return dados.disponibilidade ? 1 : 0;
+        if (campo === "nome") return dados.nome.trim();
+        return dados[campo] === "" ? null : dados[campo];
+      });
+      db.prepare(`UPDATE produto SET ${set} WHERE id_produto = ?`).run(...valores, id);
+    }
     return this.findById(id);
   }
 
-  // DELETE - detalhes_produto e produtos_categorias são removidos por ON DELETE CASCADE
+  // DELETE: apaga o produto. Se ele já estiver em algum item_pedido,
+  // a FK (sem ON DELETE) bloqueia a exclusão para não perder o histórico de vendas.
   remove(id) {
     const produto = this.findById(id);
     if (!produto) return null;
-    db.prepare("DELETE FROM produtos WHERE id = ?").run(id);
+    db.prepare("DELETE FROM produto WHERE id_produto = ?").run(id);
     return produto;
   }
 
-  // N:N - vincula uma categoria ao produto
-  addCategoria(produtoId, categoriaId) {
-    return db
-      .prepare("INSERT OR IGNORE INTO produtos_categorias (produto_id, categoria_id) VALUES (?, ?)")
-      .run(produtoId, categoriaId).changes;
-  }
-
-  // N:N - remove apenas o vínculo (não apaga produto nem categoria)
-  removeCategoria(produtoId, categoriaId) {
-    return db
-      .prepare("DELETE FROM produtos_categorias WHERE produto_id = ? AND categoria_id = ?")
-      .run(produtoId, categoriaId).changes;
-  }
-
   count() {
-    return db.prepare("SELECT COUNT(*) AS total FROM produtos").get().total;
+    return db.prepare("SELECT COUNT(*) AS total FROM produto").get().total;
   }
 }
